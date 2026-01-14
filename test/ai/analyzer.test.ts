@@ -99,7 +99,7 @@ describe('AI Analyzer', () => {
       expect(result.classification).toBe('suspicious');
       expect(result.risk_score).toBe(78);
       expect(result.summary).toContain('Concerning findings');
-      expect(result.detailed_findings.areas_of_concern).toContain('Pancreatic head');
+      expect((result.detailed_findings as any).areas_of_concern).toContain('Pancreatic head');
     });
 
     it('handles multiple slices correctly', async () => {
