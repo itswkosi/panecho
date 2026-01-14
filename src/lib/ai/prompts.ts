@@ -69,3 +69,170 @@ export function getSystemPrompt(): string {
 export function getUserPrompt(clinicalContext: ClinicalContext): string {
   return buildUserPrompt(clinicalContext);
 }
+
+/**
+ * Build comparison prompt for longitudinal analysis step 2
+ * Compares new scan with previous scans to identify changes
+ */
+export function buildComparisonPrompt(
+  newScanAnalysis: {
+    classification: string;
+    risk_score: number;
+    summary: string;
+    detailed_findings: {
+      pancreatic_observations?: string[];
+      risk_factors_identified?: string[];
+      recommendations?: string[];
+    };
+  },
+  previousAnalyses: Array<{
+    scan_date: string;
+    classification: string;
+    risk_score: number;
+    summary: string;
+    detailed_findings: {
+      pancreatic_observations?: string[];
+      risk_factors_identified?: string[];
+      recommendations?: string[];
+    };
+  }>
+): string {
+  const previousScansSummary = previousAnalyses
+    .map(
+      (analysis, idx) =>
+        `Previous Scan ${idx + 1} (${new Date(analysis.scan_date).toLocaleDateString()}):
+- Classification: ${analysis.classification}
+- Risk Score: ${analysis.risk_score}%
+- Summary: ${analysis.summary}
+- Key Observations: ${(analysis.detailed_findings.pancreatic_observations || []).slice(0, 3).join('; ')}`
+    )
+    .join('\n\n');
+
+  return `You are comparing a new pancreatic CT scan analysis with previous analyses to identify temporal changes and progression patterns.
+
+NEW SCAN ANALYSIS:
+Classification: ${newScanAnalysis.classification}
+Risk Score: ${newScanAnalysis.risk_score}%
+Summary: ${newScanAnalysis.summary}
+Key Observations: ${(newScanAnalysis.detailed_findings.pancreatic_observations || []).join('; ')}
+
+PREVIOUS SCANS:
+${previousScansSummary}
+
+Please analyze the changes between scans and identify:
+
+1. Size Changes: Have any lesions grown, shrunk, or remained stable? Quantify if possible.
+2. New Findings: What new imaging features or abnormalities appear in the current scan?
+3. Resolved Findings: What previously observed findings are no longer present or have improved?
+4. Progression Pattern: Is there a pattern of change (e.g., slow growth, rapid change, improvement)?
+
+Return your response as a valid JSON object with the following structure:
+{
+  "size_changes": [{"finding": "description", "direction": "increased/decreased/stable", "magnitude": "mild/moderate/significant"}],
+  "new_findings": ["finding 1", "finding 2"],
+  "resolved_findings": ["finding 1", "finding 2"],
+  "progression_pattern": "description of overall temporal pattern"
+}`;
+}
+
+/**
+ * Build trajectory prompt for longitudinal analysis step 3
+ * Assesses risk trajectory based on multiple scan timeline
+ */
+export function buildTrajectoryPrompt(
+  riskScoreHistory: Array<{
+    scan_date: string;
+    risk_score: number;
+  }>,
+  clinicalContext: ClinicalContext
+): string {
+  const timelineStr = riskScoreHistory
+    .map((entry) => `${new Date(entry.scan_date).toLocaleDateString()}: ${entry.risk_score}%`)
+    .join('\n');
+
+  const ageInfo = clinicalContext.age ? `Patient age: ${clinicalContext.age} years` : '';
+
+  return `You are assessing the risk trajectory (temporal trend) of pancreatic findings across multiple CT scans.
+
+RISK SCORE TIMELINE:
+${timelineStr}
+
+CLINICAL CONTEXT:
+${ageInfo}
+
+Based on this timeline, assess:
+
+1. Direction: Is the risk trajectory INCREASING, DECREASING, or STABLE?
+2. Rate: How fast is the change occurring? (rapid, moderate, slow)
+3. Clinical Significance: How clinically meaningful is the observed trajectory?
+   - For INCREASING: Suggests progression, may warrant more frequent follow-up or intervention
+   - For DECREASING: Suggests improvement, reassuring pattern
+   - For STABLE: No significant change, continue routine surveillance
+
+Return your response as a valid JSON object:
+{
+  "direction": "increasing|decreasing|stable",
+  "rate": "rapid|moderate|slow|static",
+  "clinical_significance": "description of what this trajectory means clinically",
+  "follow_up_recommendation": "suggested follow-up timing or intensity"
+}`;
+}
+
+/**
+ * Build synthesis prompt for longitudinal analysis step 4
+ * Creates comprehensive report synthesizing all analysis steps
+ */
+export function buildSynthesisPrompt(
+  initialAnalysis: {
+    classification: string;
+    risk_score: number;
+    summary: string;
+  },
+  comparisonResults: {
+    size_changes: Array<{ finding: string; direction: string; magnitude: string }>;
+    new_findings: string[];
+    resolved_findings: string[];
+    progression_pattern: string;
+  },
+  trajectoryResults: {
+    direction: string;
+    rate: string;
+    clinical_significance: string;
+    follow_up_recommendation: string;
+  }
+): string {
+  return `You are synthesizing a comprehensive longitudinal analysis report for a patient with serial pancreatic CT scans.
+
+CURRENT SCAN ASSESSMENT:
+- Classification: ${initialAnalysis.classification}
+- Risk Score: ${initialAnalysis.risk_score}%
+- Summary: ${initialAnalysis.summary}
+
+COMPARISON WITH PREVIOUS SCANS:
+- Size Changes: ${comparisonResults.size_changes.map((c) => `${c.finding} (${c.direction})`).join('; ')}
+- New Findings: ${comparisonResults.new_findings.join('; ') || 'None'}
+- Resolved Findings: ${comparisonResults.resolved_findings.join('; ') || 'None'}
+- Overall Pattern: ${comparisonResults.progression_pattern}
+
+RISK TRAJECTORY:
+- Direction: ${trajectoryResults.direction}
+- Rate: ${trajectoryResults.rate}
+- Clinical Significance: ${trajectoryResults.clinical_significance}
+- Recommended Follow-up: ${trajectoryResults.follow_up_recommendation}
+
+Please synthesize this information into a comprehensive report that includes:
+
+1. Executive Summary: 1-2 sentence overview of current status and trajectory
+2. Current Assessment: What do the current findings mean in light of prior studies?
+3. Trajectory Assessment: Is the patient improving, worsening, or stable? What does this trend mean?
+4. Clinical Recommendations: What should be done next? (follow-up interval, additional imaging, clinical consultation)
+
+Return your response as a valid JSON object:
+{
+  "executive_summary": "brief overview",
+  "current_assessment": "detailed assessment of current findings",
+  "trajectory_assessment": "interpretation of temporal trend",
+  "recommendations": "clinical recommendations for next steps"
+}`;
+}
+

@@ -235,6 +235,51 @@ export async function getAnalysis(scanId: string): Promise<Analysis | null> {
 }
 
 /**
+ * Get all analyses for a user with their related scan information
+ * @param userId - User ID to retrieve analyses for
+ * @returns Array of analyses with scan details
+ */
+export async function getAnalysesByUserId(
+  userId: string
+): Promise<
+  Array<
+    Analysis & {
+      scan?: {
+        id: string;
+        scan_date: Date;
+        file_name: string;
+      };
+    }
+  >
+> {
+  const supabase = getServerClient();
+
+  const { data: analyses, error } = await supabase
+    .from('analyses')
+    .select(
+      `
+      *,
+      scans:scan_id (
+        id,
+        scan_date,
+        file_name
+      )
+    `
+    )
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to retrieve user analyses: ${error.message}`);
+  }
+
+  return (analyses || []).map((analysis: any) => ({
+    ...formatAnalysisFromDB(analysis),
+    scan: analysis.scans ? (Array.isArray(analysis.scans) ? analysis.scans[0] : analysis.scans) : undefined,
+  }));
+}
+
+/**
  * Tracks usage for a user (increments scan count)
  * @param userId - User ID to track usage for
  */

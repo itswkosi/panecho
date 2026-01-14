@@ -13,6 +13,22 @@ export interface DetailedFindings {
   risk_factors_identified?: string[];
   recommendations?: string[];
   confidence_metrics?: Record<string, number>;
+  // Longitudinal analysis fields
+  longitudinal_changes?: LongitudinalChanges;
+  comparison_results?: {
+    size_changes: Array<{ finding: string; direction: string; magnitude: string }>;
+    new_findings: string[];
+    resolved_findings: string[];
+    progression_pattern: string;
+  };
+  trajectory_results?: {
+    direction: string;
+    rate: string;
+    clinical_significance: string;
+    follow_up_recommendation: string;
+  };
+  // Allow additional fields for flexibility
+  [key: string]: any;
 }
 
 export interface LongitudinalChanges {
