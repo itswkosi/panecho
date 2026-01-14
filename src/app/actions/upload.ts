@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { uploadFile } from '@/lib/supabase/storage';
 import { validateFileType, validateFileSize, getFileError } from '@/lib/validation/files';
 import { getUser } from './auth';
+import { createScan, trackUsage } from '@/lib/supabase/db';
+import { ClinicalContext } from '@/lib/types/database';
 
 export interface UploadResult {
   success: boolean;
@@ -67,6 +69,30 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
 
     // Upload file to Supabase Storage
     const fileUrl = await uploadFile(user.id, scanId, file);
+
+    // Create scan record in database with clinical context
+    const clinicalContext: ClinicalContext = {
+      age: 0, // Will be populated from DICOM metadata or user input later
+      smoking_status: 'never',
+    };
+
+    try {
+      await createScan({
+        user_id: user.id,
+        file_url: fileUrl,
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.name.toLowerCase().endsWith('.dcm') ? 'dicom' : 'image',
+        scan_date: new Date(),
+        clinical_context: clinicalContext,
+      });
+
+      // Track usage
+      await trackUsage(user.id);
+    } catch (dbError) {
+      // Log database error but don't fail the upload - file is already saved
+      console.error('Failed to create scan record:', dbError);
+    }
 
     return {
       success: true,
