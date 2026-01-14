@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   return (
@@ -81,6 +83,9 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+          <Link href="/upload">
+            <Button className="w-full mt-4">Upload Your First Scan</Button>
+          </Link>
         </CardContent>
       </Card>
     </div>
