@@ -14,6 +14,7 @@ import { TimelineVisualization } from '@/components/results/TimelineVisualizatio
 import { ChangeIndicator } from '@/components/results/ChangeIndicator';
 import { ComparisonView } from '@/components/results/ComparisonView';
 import { ScanHistoryTable } from '@/components/results/ScanHistoryTable';
+import { PDFDownloadButton } from '@/components/results/PDFDownloadButton';
 
 interface ResultsPageProps {
   params: {
@@ -338,14 +339,7 @@ export default function ResultsPage({ params }: ResultsPageProps) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            variant="outline" 
-            className="flex-1"
-            disabled
-            title="PDF download coming soon"
-          >
-            📄 Download PDF Report
-          </Button>
+          <PDFDownloadButton scanId={params.scanId} />
           <Link href="/upload" className="flex-1">
             <Button className="w-full">
               📤 Upload Follow-Up Scan
