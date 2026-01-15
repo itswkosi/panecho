@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { uploadScan } from '@/app/actions/upload';
@@ -12,6 +13,7 @@ interface UploadedFile {
 }
 
 export default function UploadPage() {
+  const router = useRouter();
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -92,10 +94,19 @@ export default function UploadPage() {
           setIsUploading(false);
           return;
         }
+
+        // Redirect to processing page for first successfully uploaded file
+        if (result.scanId && i === 0) {
+          setFiles([]);
+          setUploadProgress(0);
+          // Navigate to processing page
+          router.push(`/processing/${result.scanId}`);
+          return;
+        }
       }
 
       setUploadSuccess(
-        `Successfully uploaded ${validFiles.length} file(s). Scan ID: ${validFiles[0].file.name}`
+        `Successfully uploaded ${validFiles.length} file(s).`
       );
       setFiles([]);
       setUploadProgress(0);
