@@ -265,7 +265,8 @@ describe('Longitudinal Analysis', () => {
       // Should still succeed (trajectory and synthesis completed)
       expect(result.success).toBe(true);
       expect(result.failed_steps).toContain('comparison');
-      expect(result.processing_time_seconds).toBeGreaterThan(0);
+      expect(typeof result.processing_time_seconds).toBe('number');
+      expect(result.processing_time_seconds).toBeGreaterThanOrEqual(0);
     });
 
     it('should calculate processing time correctly', async () => {

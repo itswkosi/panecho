@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getAnalysis, getScan } from '@/lib/supabase/db';
+import { getAnalysis, getScan, getAnalysesByUserId } from '@/lib/supabase/db';
+import { getUser } from '@/app/actions/auth';
 import { Analysis, Scan } from '@/lib/types/database';
 import { Button } from '@/components/ui/button';
 import { Disclaimer } from '@/components/shared/Disclaimer';
 import { ClassificationBadge } from '@/components/results/ClassificationBadge';
 import { RiskScoreGauge } from '@/components/results/RiskScoreGauge';
 import { TieredDisclosure } from '@/components/results/TieredDisclosure';
+import { TimelineVisualization } from '@/components/results/TimelineVisualization';
+import { ChangeIndicator } from '@/components/results/ChangeIndicator';
+import { ComparisonView } from '@/components/results/ComparisonView';
+import { ScanHistoryTable } from '@/components/results/ScanHistoryTable';
 
 interface ResultsPageProps {
   params: {
@@ -19,13 +24,22 @@ interface ResultsPageProps {
 export default function ResultsPage({ params }: ResultsPageProps) {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [scan, setScan] = useState<Scan | null>(null);
+  const [previousAnalyses, setPreviousAnalyses] = useState<Analysis[]>([]);
+  const [allUserScans, setAllUserScans] = useState<Array<{
+    id: string;
+    scanDate: Date;
+    riskScore: number;
+    classification: 'normal' | 'suspicious';
+    analysisType: 'initial' | 'longitudinal';
+    uploadDate: Date;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch both scan and analysis
+        // Fetch current scan and analysis
         const [scanData, analysisData] = await Promise.all([
           getScan(params.scanId),
           getAnalysis(params.scanId),
@@ -46,6 +60,55 @@ export default function ResultsPage({ params }: ResultsPageProps) {
         }
 
         setAnalysis(analysisData);
+
+        // If longitudinal analysis, fetch previous analyses
+        if (analysisData.analysis_type === 'longitudinal' && analysisData.compared_scan_ids) {
+          const previousScans: Analysis[] = [];
+          for (const scanId of analysisData.compared_scan_ids) {
+            try {
+              const prevAnalysis = await getAnalysis(scanId);
+              if (prevAnalysis) previousScans.push(prevAnalysis);
+            } catch (err) {
+              console.error(`Failed to fetch analysis for scan ${scanId}:`, err);
+            }
+          }
+          setPreviousAnalyses(previousScans.sort((a, b) => 
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          ));
+        }
+
+        // Fetch all user's scans for history table
+        const user = await getUser();
+        if (user) {
+          try {
+            const userAnalyses = await getAnalysesByUserId(user.id);
+            const scansData: Array<{
+              id: string;
+              scanDate: Date;
+              riskScore: number;
+              classification: 'normal' | 'suspicious';
+              analysisType: 'initial' | 'longitudinal';
+              uploadDate: Date;
+            }> = [];
+            
+            for (const analysis of userAnalyses) {
+              if (analysis.scan) {
+                scansData.push({
+                  id: analysis.scan_id || '',
+                  scanDate: new Date(analysis.scan.scan_date),
+                  riskScore: analysis.risk_score || 0,
+                  classification: analysis.classification as 'normal' | 'suspicious',
+                  analysisType: analysis.analysis_type as 'initial' | 'longitudinal',
+                  uploadDate: new Date(analysis.created_at),
+                });
+              }
+            }
+            setAllUserScans(scansData);
+          } catch (err) {
+            console.error('Failed to fetch user scans:', err);
+          }
+        }
+
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load results');
@@ -95,6 +158,24 @@ export default function ResultsPage({ params }: ResultsPageProps) {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const isLongitudinal = analysis.analysis_type === 'longitudinal';
+
+  // Build timeline data for longitudinal analysis
+  const timelineScans = previousAnalyses.length > 0
+    ? [
+        ...previousAnalyses.map((a) => ({
+          date: new Date(a.created_at),
+          riskScore: a.risk_score,
+          classification: a.classification as 'normal' | 'suspicious',
+        })),
+        {
+          date: new Date(analysis.created_at),
+          riskScore: analysis.risk_score,
+          classification: analysis.classification as 'normal' | 'suspicious',
+        },
+      ]
+    : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -147,12 +228,89 @@ export default function ResultsPage({ params }: ResultsPageProps) {
           )}
         </div>
 
+        {/* Longitudinal Analysis Sections */}
+        {isLongitudinal && previousAnalyses.length > 0 && (
+          <>
+            {/* Timeline Visualization */}
+            <div className="mb-8">
+              <TimelineVisualization scans={timelineScans} />
+            </div>
+
+            {/* Change Indicator */}
+            <div className="mb-8">
+              <ChangeIndicator
+                previousRiskScore={Math.round(previousAnalyses[previousAnalyses.length - 1].risk_score || 0)}
+                currentRiskScore={Math.round(analysis.risk_score)}
+                previousClassification={previousAnalyses[previousAnalyses.length - 1].classification as 'normal' | 'suspicious'}
+                currentClassification={analysis.classification as 'normal' | 'suspicious'}
+              />
+            </div>
+
+            {/* Longitudinal Changes Details */}
+            {analysis.detailed_findings?.longitudinal_changes && (
+              <div className="rounded-lg border border-slate-200 bg-white p-6 mb-8">
+                <h2 className="text-lg font-semibold text-slate-900 mb-4">Longitudinal Changes</h2>
+                <div className="space-y-4">
+                  {analysis.detailed_findings.longitudinal_changes.change_detected ? (
+                    <>
+                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                        <p className="text-sm font-semibold text-amber-900">Change Detected</p>
+                        <p className="text-sm text-amber-800 mt-1">
+                          {analysis.detailed_findings.longitudinal_changes.change_description}
+                        </p>
+                      </div>
+                      {analysis.detailed_findings.longitudinal_changes.progression_rate && (
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">Progression Rate</p>
+                          <p className="text-sm text-slate-700 capitalize">
+                            {analysis.detailed_findings.longitudinal_changes.progression_rate}
+                          </p>
+                        </div>
+                      )}
+                      {analysis.detailed_findings.longitudinal_changes.clinical_significance && (
+                        <div>
+                          <p className="text-sm font-medium text-slate-900">Clinical Significance</p>
+                          <p className="text-sm text-slate-700">
+                            {analysis.detailed_findings.longitudinal_changes.clinical_significance}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-700">No significant changes detected compared to previous scans.</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Tiered Disclosure */}
         <div className="rounded-lg border border-slate-200 bg-white p-6 mb-8">
           <TieredDisclosure
             detailedFindings={analysis.detailed_findings}
+            isLongitudinal={isLongitudinal}
+            comparisonResults={analysis.detailed_findings?.comparison_results}
+            trajectoryResults={analysis.detailed_findings?.trajectory_results}
+            synthesisReport={isLongitudinal ? {
+              executive_summary: analysis.detailed_findings?.trajectory_results?.clinical_significance || '',
+              current_assessment: analysis.ai_summary,
+              trajectory_assessment: analysis.detailed_findings?.trajectory_results?.follow_up_recommendation || '',
+              recommendations: analysis.detailed_findings?.recommendations || [],
+            } : undefined}
           />
         </div>
+
+        {/* Scan History Table */}
+        {allUserScans.length > 0 && (
+          <div className="rounded-lg border border-slate-200 bg-white p-6 mb-8">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Scan History</h2>
+            <ScanHistoryTable
+              scans={allUserScans}
+              currentScanId={params.scanId}
+            />
+          </div>
+        )}
 
         {/* Analysis Metadata */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
