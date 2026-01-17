@@ -5,17 +5,19 @@ import { parseDICOM, extractKeySlices, getPixelData, getImageDimensions, DICOMMe
 import { convertSliceToPNG, optimizeImage } from '@/lib/dicom/converter';
 import { uploadFile, deleteFile } from '@/lib/supabase/storage';
 import { getUser } from './auth';
+import { handleError, createErrorResponse } from '@/lib/errors/handler';
+import { ErrorCode, ServerActionResponse } from '@/lib/types/errors';
 
-export interface ProcessingResult {
-  success: boolean;
-  scanId?: string;
-  metadata?: DICOMMetadata;
-  sliceUrls?: string[];
-  error?: string;
-}
+export interface ProcessingResult extends ServerActionResponse<{
+  scanId: string;
+  metadata: DICOMMetadata;
+  sliceUrls: string[];
+}> {}
 
 /**
  * Process DICOM file and extract/convert slices
+ * Handles both DICOM and standard image formats
+ * Comprehensive error handling with user-friendly messages
  */
 export async function processDICOM(
   fileUrl: string,
@@ -27,22 +29,48 @@ export async function processDICOM(
     // Get current user
     const user = await getUser();
     if (!user) {
-      return {
-        success: false,
-        error: 'You must be logged in to process files',
-      };
+      return createErrorResponse({
+        code: ErrorCode.UNAUTHORIZED,
+        message: 'User not authenticated',
+        userMessage: 'You must be logged in to process files.',
+        recoverable: true,
+      }, 0);
     }
 
     // Fetch file from Supabase Storage
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-      return {
-        success: false,
-        error: 'Failed to download file from storage',
-      };
+    let response: Response;
+    try {
+      response = await fetch(fileUrl);
+      if (!response.ok) {
+        return createErrorResponse({
+          code: ErrorCode.STORAGE_UPLOAD_ERROR,
+          message: `Failed to download file: ${response.statusText}`,
+          userMessage: 'We had trouble downloading your file. Please check your connection and try again.',
+          recoverable: true,
+        }, 0);
+      }
+    } catch (fetchError) {
+      const appError = handleError(fetchError, 'processDICOM_fetch');
+      return createErrorResponse({
+        code: ErrorCode.STORAGE_UPLOAD_ERROR,
+        message: appError.message,
+        userMessage: 'We had trouble downloading your file. Please check your connection and try again.',
+        recoverable: true,
+      }, 0);
     }
 
-    const arrayBuffer = await response.arrayBuffer();
+    let arrayBuffer: ArrayBuffer;
+    try {
+      arrayBuffer = await response.arrayBuffer();
+    } catch (bufferError) {
+      const appError = handleError(bufferError, 'processDICOM_buffer');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_CONVERSION_ERROR,
+        message: appError.message,
+        userMessage: 'We had trouble reading your file. The file may be corrupted.',
+        recoverable: true,
+      }, 0);
+    }
 
     // Check if this is a DICOM file (by magic number)
     const isDICOM = checkDICOMSignature(new Uint8Array(arrayBuffer));
@@ -60,36 +88,91 @@ export async function processDICOM(
     let dicomDict: any;
     try {
       dicomDict = DicomMessage.readFile(new Uint8Array(arrayBuffer));
-    } catch (error) {
-      return {
-        success: false,
-        error: 'Unable to process DICOM file: Invalid or corrupted format',
-      };
+    } catch (parseError) {
+      const appError = handleError(parseError, 'processDICOM_parse');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_PARSE_ERROR,
+        message: appError.message,
+        userMessage: appError.userMessage,
+        recoverable: true,
+      }, 0);
     }
 
     // Extract metadata
-    const metadata = await parseDICOM(arrayBuffer);
+    let metadata: DICOMMetadata;
+    try {
+      metadata = await parseDICOM(arrayBuffer);
+    } catch (metadataError) {
+      const appError = handleError(metadataError, 'processDICOM_metadata');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_PARSE_ERROR,
+        message: appError.message,
+        userMessage: 'We couldn\'t read the metadata from this DICOM file. The file may be corrupted.',
+        recoverable: true,
+      }, 0);
+    }
 
     // Extract key slices
-    const sliceIndices = extractKeySlices(metadata, 8);
+    let sliceIndices: number[];
+    try {
+      sliceIndices = extractKeySlices(metadata, 8);
+    } catch (sliceError) {
+      const appError = handleError(sliceError, 'processDICOM_extractSlices');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_CONVERSION_ERROR,
+        message: appError.message,
+        userMessage: 'We had trouble extracting slices from this DICOM file. The file format may not be supported.',
+        recoverable: true,
+      }, 0);
+    }
 
     if (sliceIndices.length === 0) {
-      return {
-        success: false,
-        error: 'No valid slices found in DICOM file',
-      };
+      return createErrorResponse({
+        code: ErrorCode.INVALID_FILE_TYPE,
+        message: 'No valid slices found in DICOM file',
+        userMessage: 'No readable slices found in this DICOM file. Please ensure it\'s a valid CT or medical imaging file.',
+        recoverable: true,
+      }, 0);
     }
 
     // Get image dimensions
-    const { width, height } = getImageDimensions(dicomDict);
+    let width: number;
+    let height: number;
+    try {
+      const dimensions = getImageDimensions(dicomDict);
+      width = dimensions.width;
+      height = dimensions.height;
+    } catch (dimensionError) {
+      const appError = handleError(dimensionError, 'processDICOM_dimensions');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_CONVERSION_ERROR,
+        message: appError.message,
+        userMessage: 'We had trouble reading the image dimensions. The file may be in an unsupported format.',
+        recoverable: true,
+      }, 0);
+    }
 
     // Get pixel data
-    const pixelData = getPixelData(dicomDict);
-    if (!pixelData) {
-      return {
-        success: false,
-        error: 'No pixel data found in DICOM file',
-      };
+    let pixelData: Uint16Array | Uint8Array;
+    try {
+      const data = getPixelData(dicomDict);
+      if (!data) {
+        return createErrorResponse({
+          code: ErrorCode.DICOM_PARSE_ERROR,
+          message: 'No pixel data found in DICOM file',
+          userMessage: 'No image data found in this DICOM file. Please ensure it\'s a valid medical imaging file.',
+          recoverable: true,
+        }, 0);
+      }
+      pixelData = data;
+    } catch (pixelError) {
+      const appError = handleError(pixelError, 'processDICOM_pixelData');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_CONVERSION_ERROR,
+        message: appError.message,
+        userMessage: appError.userMessage,
+        recoverable: true,
+      }, 0);
     }
 
     // Process each slice
@@ -106,49 +189,79 @@ export async function processDICOM(
         );
 
         // Convert to PNG
-        const pngBuffer = await convertSliceToPNG(
-          slicePixelData,
-          width,
-          height
-        );
+        let pngBuffer: Buffer;
+        try {
+          pngBuffer = await convertSliceToPNG(
+            slicePixelData,
+            width,
+            height
+          );
+        } catch (convertError) {
+          const appError = handleError(convertError, 'processDICOM_convert');
+          console.error(`Failed to convert slice ${sliceIndex}:`, appError.message);
+          // Continue processing other slices
+          continue;
+        }
 
         // Upload to Supabase Storage
-        const sliceBlob = new Blob([Buffer.from(pngBuffer)], {
-          type: 'image/png',
-        });
-        const sliceFile = new File(
-          [sliceBlob],
-          `slice_${sliceIndex}.png`,
-          { type: 'image/png' }
-        );
+        try {
+          const sliceBlob = new Blob([Buffer.from(pngBuffer)], {
+            type: 'image/png',
+          });
+          const sliceFile = new File(
+            [sliceBlob],
+            `slice_${sliceIndex}.png`,
+            { type: 'image/png' }
+          );
 
-        const fileName = `slices/slice_${sliceIndex}.png`;
-        const sliceUrl = await uploadSliceToStorage(
-          user.id,
-          scanId,
-          sliceFile,
-          fileName
-        );
+          const fileName = `slices/slice_${sliceIndex}.png`;
+          const sliceUrl = await uploadSliceToStorage(
+            user.id,
+            scanId,
+            sliceFile,
+            fileName
+          );
 
-        sliceUrls.push(sliceUrl);
-      } catch (error) {
-        console.error(`Failed to process slice ${sliceIndex}:`, error);
+          uploadedSlices.push(sliceUrl);
+          sliceUrls.push(sliceUrl);
+        } catch (uploadError) {
+          const appError = handleError(uploadError, 'processDICOM_uploadSlice');
+          console.error(`Failed to upload slice ${sliceIndex}:`, appError.message);
+          // Continue processing other slices
+          continue;
+        }
+      } catch (sliceProcessError) {
+        console.error(`Failed to process slice ${sliceIndex}:`, sliceProcessError);
         // Continue processing other slices
       }
     }
 
     if (sliceUrls.length === 0) {
-      return {
-        success: false,
-        error: 'Failed to process any slices from DICOM file',
-      };
+      // Clean up all uploaded slices
+      for (const sliceUrl of uploadedSlices) {
+        try {
+          const filePath = new URL(sliceUrl).pathname.split('/').slice(-3).join('/');
+          await deleteFile(filePath);
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+
+      return createErrorResponse({
+        code: ErrorCode.DICOM_CONVERSION_ERROR,
+        message: 'Failed to process any slices from DICOM file',
+        userMessage: 'We couldn\'t process any slices from this file. The file format may not be supported. Please try another file.',
+        recoverable: true,
+      }, 0);
     }
 
     return {
       success: true,
-      scanId,
-      metadata,
-      sliceUrls,
+      data: {
+        scanId,
+        metadata,
+        sliceUrls,
+      },
     };
   } catch (error) {
     // Clean up any uploaded slices on error
@@ -161,10 +274,13 @@ export async function processDICOM(
       }
     }
 
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to process DICOM file',
-    };
+    const appError = handleError(error, 'processDICOM_general');
+    return createErrorResponse({
+      code: ErrorCode.DICOM_CONVERSION_ERROR,
+      message: appError.message,
+      userMessage: appError.userMessage,
+      recoverable: true,
+    }, 0);
   }
 }
 
@@ -178,41 +294,67 @@ async function processNonDICOMImage(
 ): Promise<ProcessingResult> {
   try {
     // Optimize image
-    const optimizedBuffer = await optimizeImage(imageBuffer);
+    let optimizedBuffer: Buffer;
+    try {
+      optimizedBuffer = await optimizeImage(imageBuffer);
+    } catch (optimizeError) {
+      const appError = handleError(optimizeError, 'processNonDICOMImage_optimize');
+      return createErrorResponse({
+        code: ErrorCode.DICOM_CONVERSION_ERROR,
+        message: appError.message,
+        userMessage: 'We had trouble processing your image. The file format may not be supported.',
+        recoverable: true,
+      }, 0);
+    }
 
     // Upload as single slice
-    const fileBlob = new Blob([Buffer.from(optimizedBuffer)], {
-      type: 'image/png',
-    });
-    const file = new File([fileBlob], 'image.png', {
-      type: 'image/png',
-    });
+    try {
+      const fileBlob = new Blob([Buffer.from(optimizedBuffer)], {
+        type: 'image/png',
+      });
+      const file = new File([fileBlob], 'image.png', {
+        type: 'image/png',
+      });
 
-    const sliceUrl = await uploadSliceToStorage(
-      userId,
-      scanId,
-      file,
-      'slices/slice_0.png'
-    );
+      const sliceUrl = await uploadSliceToStorage(
+        userId,
+        scanId,
+        file,
+        'slices/slice_0.png'
+      );
 
-    // Return minimal metadata for non-DICOM
-    const metadata: DICOMMetadata = {
-      numSlices: 1,
-      seriesDescription: 'Imported Image',
-      modality: 'US', // Unknown modality
-    };
+      // Return minimal metadata for non-DICOM
+      const metadata: DICOMMetadata = {
+        numSlices: 1,
+        seriesDescription: 'Imported Image',
+        modality: 'US', // Unknown modality
+      };
 
-    return {
-      success: true,
-      scanId,
-      metadata,
-      sliceUrls: [sliceUrl],
-    };
+      return {
+        success: true,
+        data: {
+          scanId,
+          metadata,
+          sliceUrls: [sliceUrl],
+        },
+      };
+    } catch (uploadError) {
+      const appError = handleError(uploadError, 'processNonDICOMImage_upload');
+      return createErrorResponse({
+        code: ErrorCode.STORAGE_UPLOAD_ERROR,
+        message: appError.message,
+        userMessage: appError.userMessage,
+        recoverable: true,
+      }, 0);
+    }
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to process image',
-    };
+    const appError = handleError(error, 'processNonDICOMImage_general');
+    return createErrorResponse({
+      code: ErrorCode.DICOM_CONVERSION_ERROR,
+      message: appError.message,
+      userMessage: appError.userMessage,
+      recoverable: true,
+    }, 0);
   }
 }
 
@@ -225,30 +367,35 @@ async function uploadSliceToStorage(
   file: File,
   filePath: string
 ): Promise<string> {
-  const supabase = await import('@/lib/supabase/server').then(m => m.createClient());
+  try {
+    const supabase = await import('@/lib/supabase/server').then(m => m.createClient());
 
-  const fullPath = `${userId}/${scanId}/${filePath}`;
+    const fullPath = `${userId}/${scanId}/${filePath}`;
 
-  const { data, error } = await supabase.storage
-    .from('scans')
-    .upload(fullPath, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
+    const { data, error } = await supabase.storage
+      .from('scans')
+      .upload(fullPath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
 
-  if (error) {
-    throw new Error(`Failed to upload slice: ${error.message}`);
+    if (error) {
+      throw new Error(`Failed to upload slice: ${error.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('scans')
+      .getPublicUrl(fullPath);
+
+    if (!publicUrlData.publicUrl) {
+      throw new Error('Failed to generate slice URL');
+    }
+
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    const appError = handleError(error, 'uploadSliceToStorage');
+    throw new Error(`Storage upload error: ${appError.message}`);
   }
-
-  const { data: publicUrlData } = supabase.storage
-    .from('scans')
-    .getPublicUrl(fullPath);
-
-  if (!publicUrlData.publicUrl) {
-    throw new Error('Failed to generate slice URL');
-  }
-
-  return publicUrlData.publicUrl;
 }
 
 /**

@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { DateAssignmentModal, FileWithoutDate } from '@/components/upload/DateAssignmentModal';
+import { UsageDisplay } from '@/components/upload/UsageDisplay';
 import { uploadBatchScans } from '@/app/actions/batch';
 import { formatDateForInput } from '@/lib/utils/date';
 import { validateFileType, validateFileSize } from '@/lib/validation/files';
 import { ClinicalContext } from '@/lib/types/database';
+import { ErrorCode } from '@/lib/types/errors';
+import { checkUsageLimit } from '@/app/actions/usage';
+import type { UsageLimitResult } from '@/lib/usage/tracker';
 
 interface FileToUpload {
   name: string;
@@ -17,6 +21,14 @@ interface FileToUpload {
   isDicom: boolean;
   scanDate?: Date;
 }
+
+interface ErrorState {
+  code: ErrorCode;
+  message: string;
+  recoverable: boolean;
+}
+
+type ErrorType = string | ErrorState;
 
 const MAX_FILE_SIZE_MB = 100;
 const MAX_FILES = 5;
@@ -32,7 +44,32 @@ export default function UploadPage() {
   const [filesWithoutDates, setFilesWithoutDates] = useState<FileWithoutDate[]>([]);
   const [showDateModal, setShowDateModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorType | null>(null);
+  const [usageLimit, setUsageLimit] = useState<UsageLimitResult | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(true);
+
+  // Load usage limit on mount
+  useEffect(() => {
+    const loadUsageLimit = async () => {
+      try {
+        const result = await checkUsageLimit();
+        setUsageLimit(result);
+      } catch (err) {
+        console.error('Failed to load usage limit:', err);
+        // Default to allowing upload on error
+        setUsageLimit({
+          canUpload: true,
+          scansUsed: 0,
+          scansRemaining: 5,
+          resetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+      } finally {
+        setIsLoadingUsage(false);
+      }
+    };
+
+    loadUsageLimit();
+  }, []);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -132,6 +169,17 @@ export default function UploadPage() {
       return;
     }
 
+    // Check usage limit
+    if (!usageLimit?.canUpload) {
+      const resetDate = usageLimit?.resetDate || new Date();
+      setError({
+        code: ErrorCode.API_RATE_LIMIT,
+        message: `You've reached your limit of 5 scans this month. Your limit resets on ${resetDate.toLocaleDateString()}. Please contact support for exceptions.`,
+        recoverable: false,
+      });
+      return;
+    }
+
     setIsUploading(true);
     setError(null);
 
@@ -155,17 +203,24 @@ export default function UploadPage() {
       const result = await uploadBatchScans(filesData, clinicalContext);
 
       if (!result.success) {
-        setError(result.error || 'Upload failed');
+        setError(result.error || {
+          code: ErrorCode.UNKNOWN_ERROR,
+          message: 'Upload failed',
+          recoverable: true,
+        });
         setIsUploading(false);
         return;
       }
 
       // Navigate to first scan's results page (or timeline for 3+ scans)
-      if (result.scanIds.length === 1) {
-        router.push(`/results/${result.scanIds[0]}`);
-      } else if (result.scanIds.length >= 2) {
+      if (result.data?.scanIds.length === 1) {
+        router.push(`/results/${result.data.scanIds[0]}`);
+      } else if (result.data?.scanIds.length === 2 || result.data?.scanIds.length === 3) {
         // TODO: Create timeline/comparison page for multiple scans
-        router.push(`/results/${result.scanIds[0]}`);
+        router.push(`/results/${result.data.scanIds[0]}`);
+      } else if (result.data?.scanIds && result.data.scanIds.length > 3) {
+        // More than 3 scans - show timeline
+        router.push(`/results/${result.data.scanIds[0]}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
@@ -190,6 +245,16 @@ export default function UploadPage() {
             Upload DICOM files or images for analysis. Multiple files are supported.
           </p>
         </div>
+
+        {/* Usage Display */}
+        {!isLoadingUsage && usageLimit && (
+          <UsageDisplay
+            scansUsed={usageLimit.scansUsed}
+            scansRemaining={usageLimit.scansRemaining}
+            resetDate={usageLimit.resetDate}
+            isAdmin={usageLimit.isAdmin}
+          />
+        )}
 
         {/* Drop zone */}
         <Card className="border-2 border-dashed border-slate-300 hover:border-slate-400 transition-colors p-8 mb-6">
@@ -250,7 +315,9 @@ export default function UploadPage() {
         {/* Error message */}
         {error && (
           <Card className="border border-red-200 bg-red-50 p-4 mb-6">
-            <p className="text-red-800">{error}</p>
+            <p className="text-red-800">
+              {typeof error === 'string' ? error : error.message}
+            </p>
           </Card>
         )}
 
@@ -311,7 +378,7 @@ export default function UploadPage() {
           <Button
             type="button"
             onClick={handleUpload}
-            disabled={selectedFiles.length === 0 || isUploading}
+            disabled={selectedFiles.length === 0 || isUploading || !usageLimit?.canUpload}
             className="flex-1"
           >
             {isUploading ? 'Uploading...' : `Upload ${selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''}`}

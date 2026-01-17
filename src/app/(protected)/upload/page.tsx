@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { UsageDisplay } from '@/components/upload/UsageDisplay';
 import { uploadScan } from '@/app/actions/upload';
+import { checkUsageLimit } from '@/app/actions/usage';
+import type { UsageLimitResult } from '@/lib/usage/tracker';
+import {
+  getRetentionStatus,
+  extendScanRetention,
+  deleteScan,
+} from '@/app/actions/retention';
+import { RetentionNotification } from '@/components/shared/RetentionNotification';
+import type { RetentionStatus } from '@/lib/retention/manager';
 import { getFileError, getFileSize } from '@/lib/validation/files';
 
 interface UploadedFile {
@@ -19,6 +29,70 @@ export default function UploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [retentionStatuses, setRetentionStatuses] = useState<RetentionStatus[]>([]);
+  const [retentionLoading, setRetentionLoading] = useState(false);
+
+  // Load retention statuses for dismissible notification
+  useEffect(() => {
+    let mounted = true;
+
+    const load = async () => {
+      try {
+        setRetentionLoading(true);
+        const res = await getRetentionStatus();
+        if (!mounted) return;
+        if (!res.success) return;
+
+        const parsed = (res.data || []).map((s: any) => ({
+          ...s,
+          scanDate: new Date(s.scanDate),
+          expiresAt: new Date(s.expiresAt),
+        }));
+
+        setRetentionStatuses(parsed);
+      } catch (err) {
+        // ignore
+      } finally {
+        if (mounted) setRetentionLoading(false);
+      }
+    };
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleExtend = async (scanId: string) => {
+    try {
+      const res = await extendScanRetention(scanId);
+      if (res.success) {
+        // refresh statuses
+        const updated = await getRetentionStatus();
+        if (updated.success) {
+          setRetentionStatuses((updated.data || []).map((s: any) => ({
+            ...s,
+            scanDate: new Date(s.scanDate),
+            expiresAt: new Date(s.expiresAt),
+          })));
+        }
+      }
+    } catch (err) {
+      // ignore
+    }
+  };
+
+  const handleDelete = async (scanId: string) => {
+    try {
+      const res = await deleteScan(scanId);
+      if (res.success) {
+        setRetentionStatuses((prev) => prev.filter((s) => s.scanId !== scanId));
+      }
+    } catch (err) {
+      // ignore
+    }
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragRef = useRef<HTMLDivElement>(null);
 
@@ -90,17 +164,17 @@ export default function UploadPage() {
         const result = await uploadScan(formData);
 
         if (!result.success) {
-          setUploadError(result.error || 'Upload failed');
+          setUploadError(result.error?.message || 'Upload failed');
           setIsUploading(false);
           return;
         }
 
         // Redirect to processing page for first successfully uploaded file
-        if (result.scanId && i === 0) {
+        if (result.data?.scanId && i === 0) {
           setFiles([]);
           setUploadProgress(0);
           // Navigate to processing page
-          router.push(`/processing/${result.scanId}`);
+          router.push(`/processing/${result.data.scanId}`);
           return;
         }
       }
@@ -122,6 +196,12 @@ export default function UploadPage() {
 
   return (
     <div className="space-y-8">
+      {/* Retention notifications for scans nearing deletion */}
+      <RetentionNotification
+        retentionStatuses={retentionStatuses}
+        onExtend={handleExtend}
+        onDelete={handleDelete}
+      />
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Upload CT Scan</h1>
         <p className="text-slate-500 mt-2">

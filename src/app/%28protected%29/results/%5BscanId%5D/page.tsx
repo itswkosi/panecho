@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { AlertCircle } from 'lucide-react';
 import { getAnalysis, getScan, getAnalysesByUserId } from '@/lib/supabase/db';
 import { getUser } from '@/app/actions/auth';
+import { getScanRetention, extendScanRetention } from '@/app/actions/retention';
 import { Analysis, Scan } from '@/lib/types/database';
 import { Button } from '@/components/ui/button';
 import { Disclaimer } from '@/components/shared/Disclaimer';
@@ -36,6 +38,13 @@ export default function ResultsPage({ params }: ResultsPageProps) {
   }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retention, setRetention] = useState<{
+    expiresAt: Date;
+    daysRemaining: number;
+    canExtend: boolean;
+    extensionCount: number;
+  } | null>(null);
+  const [extendingRetention, setExtendingRetention] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +70,17 @@ export default function ResultsPage({ params }: ResultsPageProps) {
         }
 
         setAnalysis(analysisData);
+
+        // Fetch retention info
+        const retentionRes = await getScanRetention(params.scanId);
+        if (retentionRes.success && retentionRes.data) {
+          setRetention({
+            expiresAt: new Date(retentionRes.data.expiresAt),
+            daysRemaining: retentionRes.data.daysRemaining,
+            canExtend: retentionRes.data.canExtend,
+            extensionCount: retentionRes.data.extensionCount,
+          });
+        }
 
         // If longitudinal analysis, fetch previous analyses
         if (analysisData.analysis_type === 'longitudinal' && analysisData.compared_scan_ids) {
@@ -310,6 +330,72 @@ export default function ResultsPage({ params }: ResultsPageProps) {
               scans={allUserScans}
               currentScanId={params.scanId}
             />
+          </div>
+        )}
+
+        {/* Data Retention Information */}
+        {retention && (
+          <div
+            className={`rounded-lg border p-6 mb-8 ${
+              retention.daysRemaining <= 30
+                ? 'border-amber-200 bg-amber-50'
+                : 'border-slate-200 bg-white'
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              {retention.daysRemaining <= 30 && (
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-1" />
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-slate-900 mb-2">Data Retention</h3>
+                <p className={`text-sm mb-3 ${
+                  retention.daysRemaining <= 30
+                    ? 'text-amber-800'
+                    : 'text-slate-700'
+                }`}>
+                  Your scan data will be automatically deleted on{' '}
+                  <strong>{retention.expiresAt.toLocaleDateString()}</strong>{' '}
+                  ({retention.daysRemaining} days remaining).
+                </p>
+                {retention.daysRemaining <= 30 && retention.canExtend && (
+                  <p className="text-xs text-amber-700 mb-3">
+                    Extended {retention.extensionCount}/3 times. You can extend retention by 90 days.
+                  </p>
+                )}
+                {!retention.canExtend && (
+                  <p className="text-xs text-amber-700 mb-3">
+                    You have used all 3 available extensions. No further extensions available.
+                  </p>
+                )}
+              </div>
+              {retention.canExtend && (
+                <Button
+                  onClick={async () => {
+                    try {
+                      setExtendingRetention(true);
+                      const res = await extendScanRetention(params.scanId);
+                      if (res.success && res.data) {
+                        setRetention({
+                          expiresAt: new Date(res.data.newExpirationDate),
+                          daysRemaining: 90,
+                          canExtend: res.data.extensionsRemaining > 0,
+                          extensionCount: retention.extensionCount + 1,
+                        });
+                      }
+                    } catch (err) {
+                      console.error('Error extending retention:', err);
+                    } finally {
+                      setExtendingRetention(false);
+                    }
+                  }}
+                  disabled={extendingRetention}
+                  className="flex-shrink-0"
+                  variant="outline"
+                >
+                  {extendingRetention ? 'Extending...' : 'Extend Retention'}
+                </Button>
+              )}
+            </div>
           </div>
         )}
 

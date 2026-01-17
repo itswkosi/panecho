@@ -123,3 +123,105 @@
     @apply bg-background text-foreground;
   }
 }
+
+/**
+ * Accessibility Improvements
+ */
+
+/* Focus Indicators - Visible on all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="link"]:focus-visible {
+  @apply outline-2 outline-offset-2 outline-blue-500 rounded;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Semantic HTML improvements */
+main {
+  min-height: calc(100vh - 200px);
+}
+
+/* Link styling for better contrast */
+a {
+  @apply underline;
+}
+
+/* Form input improvements */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+textarea,
+select {
+  @apply min-h-[44px] text-base;
+  font-size: 16px; /* Prevent zoom on iOS */
+}
+
+/* Visible labels for form fields */
+label {
+  @apply block font-medium text-sm mb-1;
+}
+
+/* Error message styling */
+.error-message {
+  @apply text-red-600 text-sm mt-1 block;
+  role: alert;
+}
+
+/* Loading skeleton accessibility */
+.skeleton {
+  @apply bg-slate-200 dark:bg-slate-700 rounded;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* Ensure sufficient color contrast */
+body {
+  @apply text-slate-900 dark:text-slate-50;
+}
+
+/* Mobile touch target minimum size */
+@media (max-width: 1024px) {
+  button,
+  [role="button"],
+  a[href],
+  input[type="checkbox"],
+  input[type="radio"],
+  select,
+  textarea {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Skip link styling */
+.skip-link {
+  @apply absolute top-0 left-0 z-50 bg-blue-600 text-white px-4 py-2 rounded;
+  @apply -translate-y-full focus:translate-y-0 transition-transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+

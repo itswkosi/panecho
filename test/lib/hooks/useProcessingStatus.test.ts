@@ -10,13 +10,18 @@ const mockScan = {
   user_id: 'user-123',
   file_url: 'https://example.com/scan.dcm',
   file_name: 'scan.dcm',
-  file_type: 'application/dicom',
+  file_type: 'dicom' as const,
   file_size: 5000000,
+  upload_date: new Date(),
+  scan_date: new Date(),
+  clinical_context: { patient_age: 65, patient_sex: 'M', indication: 'Routine' },
   created_at: new Date().toISOString(),
   processing_status: 'processing' as const,
   error_message: null,
   dicom_metadata: { patient_name: 'John Doe', modality: 'CT' },
-};
+  retention_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+  retention_extended_count: 0,
+} as any;
 
 describe('useProcessingStatus', () => {
   beforeEach(() => {

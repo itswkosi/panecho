@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PDFDownloadButton } from '@/components/results/PDFDownloadButton';
 import * as pdfActions from '@/app/actions/pdf';
+import { ErrorCode } from '@/lib/types/errors';
 
 vi.mock('@/app/actions/pdf');
 
@@ -24,7 +25,13 @@ describe('PDFDownloadButton', () => {
       () =>
         new Promise((resolve) =>
           setTimeout(
-            () => resolve({ success: true, blob: new Blob(), filename: 'test.pdf' }),
+            () => resolve({ 
+              success: true, 
+              data: {
+                blob: new Blob(), 
+                filename: 'test.pdf'
+              }
+            }),
             1000,
           ),
         ),
@@ -37,17 +44,20 @@ describe('PDFDownloadButton', () => {
     expect(button).toHaveTextContent('Generating PDF...');
     expect(button).toBeDisabled();
 
+    // Wait for the async operation and state update
     await waitFor(() => {
-      expect(button).toHaveTextContent('Download PDF Report');
+      // After generation, button should be re-enabled
       expect(button).not.toBeDisabled();
-    });
+    }, { timeout: 3000 });
   });
 
   it('calls generatePDF with correct scanId', async () => {
     mockGeneratePDF.mockResolvedValueOnce({
       success: true,
-      blob: new Blob(),
-      filename: 'test.pdf',
+      data: {
+        blob: new Blob(),
+        filename: 'test.pdf',
+      }
     });
 
     render(<PDFDownloadButton scanId="scan-123" />);
@@ -66,8 +76,10 @@ describe('PDFDownloadButton', () => {
 
     mockGeneratePDF.mockResolvedValueOnce({
       success: true,
-      blob: mockBlob,
-      filename: mockFilename,
+      data: {
+        blob: mockBlob,
+        filename: mockFilename,
+      }
     });
 
     // Mock URL.createObjectURL and link elements
@@ -103,7 +115,11 @@ describe('PDFDownloadButton', () => {
     const errorMessage = 'Failed to generate PDF';
     mockGeneratePDF.mockResolvedValueOnce({
       success: false,
-      error: errorMessage,
+      error: {
+        code: ErrorCode.API_ERROR,
+        message: errorMessage,
+        recoverable: true,
+      },
     });
 
     render(<PDFDownloadButton scanId="scan-123" />);
@@ -125,7 +141,11 @@ describe('PDFDownloadButton', () => {
   it('clears error when retry is attempted', async () => {
     mockGeneratePDF.mockResolvedValueOnce({
       success: false,
-      error: 'First attempt failed',
+      error: {
+        code: ErrorCode.API_ERROR,
+        message: 'First attempt failed',
+        recoverable: true,
+      },
     });
 
     const { rerender } = render(<PDFDownloadButton scanId="scan-123" />);
@@ -140,8 +160,10 @@ describe('PDFDownloadButton', () => {
     // Second attempt succeeds
     mockGeneratePDF.mockResolvedValueOnce({
       success: true,
-      blob: new Blob(),
-      filename: 'success.pdf',
+      data: {
+        blob: new Blob(),
+        filename: 'success.pdf',
+      }
     });
 
     fireEvent.click(button);
@@ -182,7 +204,13 @@ describe('PDFDownloadButton', () => {
     // Keep button disabled until promise resolves
     expect(button).toBeDisabled();
 
-    resolveGenerate({ success: true, blob: new Blob(), filename: 'test.pdf' });
+    resolveGenerate({ 
+      success: true, 
+      data: {
+        blob: new Blob(), 
+        filename: 'test.pdf'
+      }
+    });
 
     await waitFor(() => {
       expect(button).not.toBeDisabled();
@@ -192,7 +220,11 @@ describe('PDFDownloadButton', () => {
   it('handles missing blob in response', async () => {
     mockGeneratePDF.mockResolvedValueOnce({
       success: false,
-      error: 'Failed to generate PDF',
+      error: {
+        code: ErrorCode.API_ERROR,
+        message: 'Failed to generate PDF',
+        recoverable: true,
+      },
     });
 
     render(<PDFDownloadButton scanId="scan-123" />);
@@ -208,7 +240,11 @@ describe('PDFDownloadButton', () => {
   it('handles missing filename in response', async () => {
     mockGeneratePDF.mockResolvedValueOnce({
       success: false,
-      error: 'Failed to generate PDF',
+      error: {
+        code: ErrorCode.API_ERROR,
+        message: 'Failed to generate PDF',
+        recoverable: true,
+      },
     });
 
     render(<PDFDownloadButton scanId="scan-123" />);

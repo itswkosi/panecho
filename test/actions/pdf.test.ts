@@ -68,8 +68,9 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(true);
-      expect(result.blob).toBeDefined();
-      expect(result.filename).toMatch(/PanEcho_Report_John_Doe_/);
+      expect(result.data).toBeDefined();
+      expect(result.data?.blob).toBeDefined();
+      expect(result.data?.filename).toMatch(/PanEcho_Report_John_Doe_/);
       expect(result.error).toBeUndefined();
     });
 
@@ -79,8 +80,9 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('User not authenticated');
-      expect(result.blob).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.code).toBe('UNAUTHORIZED');
+      expect(result.data).toBeUndefined();
     });
 
     it('should return error if scan not found', async () => {
@@ -90,8 +92,9 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Scan not found');
-      expect(result.blob).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.code).toBe('NOT_FOUND');
+      expect(result.data).toBeUndefined();
     });
 
     it('should return error if analysis not available', async () => {
@@ -102,8 +105,9 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Analysis not available');
-      expect(result.blob).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.code).toBe('INVALID_API_RESPONSE');
+      expect(result.data).toBeUndefined();
     });
 
     it('should fetch previous analyses for longitudinal', async () => {
@@ -156,8 +160,8 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(true);
-      expect(result.filename).toContain('Jane_Smith');
-      expect(result.filename).toContain('2024-01-15');
+      expect(result.data?.filename).toContain('Jane_Smith');
+      expect(result.data?.filename).toContain('2024-01-15');
     });
 
     it('should use default name if user metadata missing', async () => {
@@ -176,7 +180,7 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(true);
-      expect(result.filename).toContain('Patient');
+      expect(result.data?.filename).toContain('Patient');
     });
 
     it('should handle PDF generation errors', async () => {
@@ -190,8 +194,9 @@ describe('PDF Server Action', () => {
       const result = await generatePDF('scan-123');
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('PDF generation failed');
-      expect(result.blob).toBeUndefined();
+      expect(result.error).toBeDefined();
+      expect(result.error?.code).toBe('API_ERROR');
+      expect(result.data).toBeUndefined();
     });
 
     it('should gracefully handle missing previous analysis', async () => {
