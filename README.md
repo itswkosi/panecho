@@ -1,13 +1,13 @@
-# PanEcho - AI-Powered Echocardiogram Analysis
+# PanEcho
 
-PanEcho is an advanced web application that uses artificial intelligence to analyze echocardiogram (ultrasound) images and provide detailed cardiac assessments.
+PanEcho is an advanced web application that uses artificial intelligence to analyze CT/MRI images and provide detailed pancreatic assessments.
 
 ## 🚀 Quick Start
 
 ### For Users
 
 1. **Sign up** at [https://panecho.com](https://panecho.com)
-2. **Upload** your echocardiogram files (DICOM format)
+2. **Upload** your echographic files (DICOM format)
 3. **Wait** 60-90 seconds for AI analysis
 4. **View** detailed results and recommendations
 5. **Download** professional PDF report
@@ -36,7 +36,7 @@ npm run dev
 
 ### Core Features
 - ✅ **DICOM Upload** - Support for medical imaging format
-- ✅ **AI Analysis** - GPT-4o-mini powered cardiac assessment
+- ✅ **AI Analysis** - GPT-4o-mini powered pancreatic assessment
 - ✅ **Risk Scoring** - Quantitative risk score (0-100)
 - ✅ **Anatomical Analysis** - Detailed chamber and valve assessment
 - ✅ **Clinical Recommendations** - Actionable next steps
@@ -92,7 +92,7 @@ PanEcho uses GPT-4o-mini for image analysis and has been tested with TCIA (The C
 ### What should I do with my results?
 
 1. **Download the PDF report**
-2. **Share with your cardiologist**
+2. **Share with your clinician**
 3. **Do NOT make medical decisions based solely on PanEcho**
 4. **Follow up as recommended**
 
@@ -133,7 +133,7 @@ You can manually delete scans at any time from your dashboard.
 
 ### What if I find an error?
 
-Contact us immediately at **support@panecho.com**
+Contact immediately at **semilogooketola@outlook.com**
 
 We monitor:
 - Error rates
@@ -156,7 +156,7 @@ We monitor:
 
 ### Can I integrate PanEcho into my application?
 
-Currently, PanEcho does not offer a public API. Contact us at **support@panecho.com** for enterprise inquiries.
+Currently, PanEcho does not offer a public API. Contact us at **semilogooketola@outlook.com** for enterprise inquiries.
 
 ---
 
@@ -164,13 +164,13 @@ Currently, PanEcho does not offer a public API. Contact us at **support@panecho.
 
 ### Need Help?
 
-- **Email:** support@panecho.com
+- **Email:** semilogooketola@outlook.com
 - **Response Time:** Within 24 hours
 - **Status Page:** [status.panecho.com](https://status.panecho.com) *(coming soon)*
 
 ### Report a Bug
 
-Email support@panecho.com with:
+Email semilogooketola@outlook.com with:
 1. Description of the issue
 2. Steps to reproduce
 3. Browser and device info
@@ -263,6 +263,6 @@ MIT License - See [LICENSE](./LICENSE) for details
 
 ---
 
-**Built with ❤️ for advancing cardiac imaging accessibility**
+**Built with ❤️ for advancing pancreatic imaging accessibility**
 
 *Last updated: January 17, 2026*
