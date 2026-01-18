@@ -13,7 +13,7 @@ import { trackScanUploaded, trackError, trackUsageLimitReached } from '@/lib/ana
 
 export interface UploadResult extends ServerActionResponse<{ scanId: string; fileUrl: string }> {}
 
-const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 5; // DICOM files typically 2-5MB
 
 /**
  * Server action to handle file uploads
