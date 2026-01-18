@@ -30,7 +30,7 @@ interface ErrorState {
 
 type ErrorType = string | ErrorState;
 
-const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 5; // DICOM files typically 2-5MB
 const MAX_FILES = 5;
 
 /**

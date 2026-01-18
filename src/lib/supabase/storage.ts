@@ -1,7 +1,7 @@
 import { createClient } from './server';
 
 const BUCKET_NAME = 'scans';
-const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB - DICOM files typically 2-5MB
 
 /**
  * Upload a file to Supabase Storage
