@@ -378,7 +378,7 @@ export default function UploadPage() {
           <p>• Your files are encrypted and securely stored</p>
         </CardContent>
       </Card>
-      </div>
+    </div>
     </div>
   );
 }
