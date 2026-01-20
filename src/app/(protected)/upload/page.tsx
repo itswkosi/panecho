@@ -368,7 +368,8 @@ export default function UploadPage() {
       </Card>
 
       {/* Upload Tips */}
-      <Card className="border-[#D4B5A0]/30">\n        <CardHeader>
+      <Card className="border-[#D4B5A0]/30">
+        <CardHeader>
           <CardTitle className="text-base text-[#2C2C2C]">Upload Tips</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-2 text-[#5C5C5C]">
@@ -378,7 +379,7 @@ export default function UploadPage() {
           <p>• Your files are encrypted and securely stored</p>
         </CardContent>
       </Card>
-    </div>
-    </div>
+        </div>
+      </div>
   );
 }
