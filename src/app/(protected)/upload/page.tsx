@@ -166,7 +166,6 @@ export default function UploadPage() {
         if (!result.success) {
           console.error('Upload failed:', result.error);
           setUploadError(
-            result.error?.userMessage || 
             result.error?.message || 
             'Upload failed. Please try again.'
           );

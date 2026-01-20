@@ -42,7 +42,7 @@ export default async function HomePage() {
             <div className="relative">
               <div className="rounded-lg overflow-hidden shadow-lg">
                 <Image 
-                  src="/Untitled design.png" 
+                  src="/hero-image.png" 
                   alt="Pancreatic CT Scan Analysis" 
                   width={600} 
                   height={600}
