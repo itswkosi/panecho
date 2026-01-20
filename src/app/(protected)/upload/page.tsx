@@ -164,7 +164,12 @@ export default function UploadPage() {
         const result = await uploadScan(formData);
 
         if (!result.success) {
-          setUploadError(result.error?.message || 'Upload failed');
+          console.error('Upload failed:', result.error);
+          setUploadError(
+            result.error?.userMessage || 
+            result.error?.message || 
+            'Upload failed. Please try again.'
+          );
           setIsUploading(false);
           return;
         }
@@ -195,27 +200,29 @@ export default function UploadPage() {
   const invalidFiles = files.filter((f) => f.error);
 
   return (
-    <div className="space-y-8">
-      {/* Retention notifications for scans nearing deletion */}
-      <RetentionNotification
-        retentionStatuses={retentionStatuses}
-        onExtend={handleExtend}
-        onDelete={handleDelete}
-      />
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Upload CT Scan</h1>
-        <p className="text-slate-500 mt-2">
-          Upload your DICOM, PNG, or JPEG images for analysis
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#F5F1EA] py-8">
+      <div className="max-w-5xl mx-auto px-8">
+        <div className="space-y-8">
+          {/* Retention notifications for scans nearing deletion */}
+          <RetentionNotification
+            retentionStatuses={retentionStatuses}
+            onExtend={handleExtend}
+            onDelete={handleDelete}
+          />
+          <div>
+            <h1 className="text-4xl font-serif text-[#2C2C2C]">Upload CT Scan</h1>
+            <p className="text-[#5C5C5C] mt-2">
+              Upload your DICOM, PNG, or JPEG images for analysis
+            </p>
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Files</CardTitle>
-          <CardDescription>
-            Drag and drop your files or click to browse. Maximum file size: 100MB
-          </CardDescription>
-        </CardHeader>
+          <Card className="border-[#D4B5A0]/30 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-[#2C2C2C]">Select Files</CardTitle>
+              <CardDescription className="text-[#5C5C5C]">
+                Drag and drop your files or click to browse. Maximum file size: 5MB
+              </CardDescription>
+            </CardHeader>
         <CardContent className="space-y-6">
           {/* Upload Zone */}
           <div
@@ -353,7 +360,7 @@ export default function UploadPage() {
             onClick={handleUpload}
             disabled={validFiles.length === 0 || isUploading}
             size="lg"
-            className="w-full"
+            className="w-full bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C]"
           >
             {isUploading ? `Uploading... ${uploadProgress}%` : 'Analyze Scan'}
           </Button>
@@ -361,17 +368,17 @@ export default function UploadPage() {
       </Card>
 
       {/* Upload Tips */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Upload Tips</CardTitle>
+      <Card className="border-[#D4B5A0]/30">\n        <CardHeader>
+          <CardTitle className="text-base text-[#2C2C2C]">Upload Tips</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm space-y-2 text-slate-600">
+        <CardContent className="text-sm space-y-2 text-[#5C5C5C]">
           <p>• DICOM files (.dcm) are the standard format for medical CT scans</p>
           <p>• PNG and JPEG formats are also supported for compatibility</p>
-          <p>• Maximum file size is 100MB per file</p>
+          <p>• Maximum file size is 5MB per file</p>
           <p>• Your files are encrypted and securely stored</p>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
