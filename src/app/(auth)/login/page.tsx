@@ -34,24 +34,29 @@ function LoginPageContent() {
       const result = await signIn(formData);
       if (result && !result.success) {
         setError(result.error || "Login failed");
+        setLoading(false);
       }
+      // If successful, redirect happens automatically - don't set loading to false
     } catch (err) {
+      // Ignore NEXT_REDIRECT errors - they're expected
+      if (err instanceof Error && err.message.includes('NEXT_REDIRECT')) {
+        return; // Let Next.js handle the redirect
+      }
       setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F1EA] px-4">
+      <Card className="w-full max-w-md border-[#D4B5A0]/30 shadow-lg">
         <CardHeader className="space-y-2">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-blue-600">PanEcho</h1>
-            <p className="text-sm text-slate-500 mt-1">Pancreatic Cancer Screening</p>
+            <h1 className="text-3xl font-serif text-[#2C2C2C]">Panecho</h1>
+            <p className="text-sm text-[#5C5C5C] mt-1">Pancreatic Cancer Screening</p>
           </div>
-          <CardTitle className="text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">Enter your credentials to access PanEcho</CardDescription>
+          <CardTitle className="text-center text-[#2C2C2C]">Sign In</CardTitle>
+          <CardDescription className="text-center text-[#5C5C5C]">Enter your credentials to access Panecho</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,7 +96,7 @@ function LoginPageContent() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C]" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>

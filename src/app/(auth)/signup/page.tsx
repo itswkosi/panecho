@@ -36,15 +36,15 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F1EA] px-4">
+      <Card className="w-full max-w-md border-[#D4B5A0]/30 shadow-lg">
         <CardHeader className="space-y-2">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-blue-600">PanEcho</h1>
-            <p className="text-sm text-slate-500 mt-1">Pancreatic Cancer Screening</p>
+            <h1 className="text-3xl font-serif text-[#2C2C2C]">Panecho</h1>
+            <p className="text-sm text-[#5C5C5C] mt-1">Pancreatic Cancer Screening</p>
           </div>
-          <CardTitle className="text-center">Create an Account</CardTitle>
-          <CardDescription className="text-center">Sign up to get started with PanEcho</CardDescription>
+          <CardTitle className="text-center text-[#2C2C2C]">Create an Account</CardTitle>
+          <CardDescription className="text-center text-[#5C5C5C]">Sign up to get started with Panecho</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -90,7 +90,7 @@ export default function SignUpPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C]" disabled={loading}>
               {loading ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
