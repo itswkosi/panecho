@@ -381,5 +381,6 @@ export default function UploadPage() {
       </Card>
         </div>
       </div>
+    </div>
   );
 }
