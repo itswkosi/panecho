@@ -60,26 +60,20 @@ export async function signIn(formData: FormData) {
 
   const supabase = await createClient();
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (error) {
-      return {
-        success: false,
-        error: error.message || "An error occurred",
-      };
-    }
-
-    redirect("/dashboard");
-  } catch (error) {
+  if (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "An error occurred",
+      error: error.message || "An error occurred",
     };
   }
+
+  // Success - redirect will be handled by Next.js
+  redirect("/dashboard");
 }
 
 export async function signOut() {
