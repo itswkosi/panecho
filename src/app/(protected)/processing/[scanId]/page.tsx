@@ -38,9 +38,9 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
     if (status === 'processing') {
       const updateTimer = setInterval(() => {
         const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-        // Estimate based on typical processing time (e.g., 60 seconds typical)
+        // Estimate based on typical processing time (e.g., 300 seconds typical)
         // Adjust these estimates based on actual usage patterns
-        const estimatedTotal = 60; // seconds
+        const estimatedTotal = 300; // seconds (5 minutes)
         const remaining = Math.max(0, estimatedTotal - elapsedSeconds);
         setEstimatedTimeRemaining(remaining);
       }, 1000);
@@ -50,13 +50,13 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
   }, [status, startTime]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-[#F5F1EA]">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Processing Your Scan</h1>
-          <p className="mt-2 text-gray-600">
-            Our AI is analyzing your pancreatic imaging. This typically takes 30-60 seconds.
+          <h1 className="text-3xl font-bold text-[#2C2C2C]">Processing Your Scan</h1>
+          <p className="mt-2 text-[#5C5C5C]">
+            Our AI is analyzing your pancreatic imaging. This typically takes 3-5 minutes.
           </p>
         </div>
 
@@ -90,8 +90,8 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
         {/* Loading indicator for initial fetch */}
         {isLoading && status === 'pending' && (
           <div className="mt-8 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-            <p className="mt-2 text-gray-600">Checking scan status...</p>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#D4B5A0]/30 border-t-[#D4B5A0]" />
+            <p className="mt-2 text-[#5C5C5C]">Checking scan status...</p>
           </div>
         )}
       </div>

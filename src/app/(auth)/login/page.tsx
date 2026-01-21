@@ -104,11 +104,11 @@ function LoginPageContent() {
           <div className="mt-6 space-y-3 text-center text-sm">
             <div>
               Don't have an account?{" "}
-              <Link href="/signup" className="font-medium text-blue-600 hover:underline">
+              <Link href="/signup" className="font-medium text-[#D4B5A0] hover:underline">
                 Sign up
               </Link>
             </div>
-            <Link href="#" className="block text-blue-600 hover:underline">
+            <Link href="#" className="block text-[#D4B5A0] hover:underline">
               Forgot password?
             </Link>
           </div>
