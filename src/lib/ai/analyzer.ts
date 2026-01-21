@@ -123,13 +123,14 @@ export async function analyzeInitialScan(
       },
     ];
 
-    // Add images with high detail for better analysis
+    // Add images with auto detail for faster processing
+    // 'auto' is significantly faster than 'high' while still providing good accuracy
     sliceImages.forEach((img, index) => {
       messageContent.push({
         type: 'image_url',
         image_url: {
           url: `data:image/png;base64,${img}`,
-          detail: 'high',
+          detail: 'auto', // Faster processing than 'high'
         },
       });
     });
@@ -139,7 +140,7 @@ export async function analyzeInitialScan(
     // Call GPT-4o with vision
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      max_tokens: 2000,
+      max_tokens: 1000, // Reduced for faster response
       temperature: 0.3, // Lower temperature for more consistent medical judgments
       response_format: { type: 'json_object' },
       messages: [

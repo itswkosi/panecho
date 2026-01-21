@@ -10,6 +10,7 @@ import { handleError, createErrorResponse } from '@/lib/errors/handler';
 import { ErrorCode, ServerActionResponse } from '@/lib/types/errors';
 import { checkUsageLimit, trackScanUsage } from '@/lib/usage/tracker';
 import { trackScanUploaded, trackError, trackUsageLimitReached } from '@/lib/analytics/tracker';
+import { analyzeInitialScan } from './analyze';
 
 export interface UploadResult extends ServerActionResponse<{ scanId: string; fileUrl: string }> {}
 
@@ -136,6 +137,10 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
       smoking_status: 'never',
     };
 
+    // Mock key_slices for immediate analysis (real DICOM processing would extract actual slices)
+    // Using uploaded file URL as placeholder - in production, would convert DICOM to PNG slices
+    const mockKeySlices = [fileUrl]; // Use the uploaded file itself
+
     try {
       await createScan({
         user_id: user.id,
@@ -145,6 +150,7 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
         file_type: file.name.toLowerCase().endsWith('.dcm') ? 'dicom' : 'image',
         scan_date: new Date(),
         clinical_context: clinicalContext,
+        key_slices: mockKeySlices,
       });
 
       // Track usage - both old and new systems
@@ -155,6 +161,12 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
       const fileSizeMb = file.size / (1024 * 1024);
       const fileType = file.name.toLowerCase().endsWith('.dcm') ? 'dicom' : 'image';
       trackScanUploaded(fileType, fileSizeMb, false);
+
+      // Trigger analysis immediately in background (don't await - let it run async)
+      analyzeInitialScan(scanId).catch(err => {
+        console.error('Background analysis failed for scan:', scanId, err);
+        // Don't fail the upload if analysis fails - user can retry from processing page
+      });
     } catch (dbError) {
       // File uploaded successfully, but database record failed
       // Log error but return success - user can still access the file
