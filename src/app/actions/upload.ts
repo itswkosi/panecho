@@ -117,12 +117,13 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
     try {
       fileUrl = await uploadFile(user.id, scanId, file);
     } catch (uploadError) {
+      console.error('Upload error details:', uploadError);
       const appError = handleError(uploadError, 'uploadScan_storage');
       return createErrorResponse(
         {
           code: ErrorCode.STORAGE_UPLOAD_ERROR,
           message: appError.message,
-          userMessage: appError.userMessage,
+          userMessage: uploadError instanceof Error ? uploadError.message : appError.userMessage,
           recoverable: true,
         },
         0

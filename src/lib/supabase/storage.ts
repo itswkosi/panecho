@@ -34,7 +34,8 @@ export async function uploadFile(
     });
 
   if (error) {
-    throw new Error(`Failed to upload file: ${error.message}`);
+    console.error('Supabase storage upload error:', error);
+    throw new Error(`Storage upload failed: ${error.message}. Check if the '${BUCKET_NAME}' bucket exists in Supabase.`);
   }
 
   // Get public URL

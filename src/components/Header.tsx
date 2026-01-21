@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { signOut } from "@/app/actions/auth";
+import { Linkedin, Github, BookOpen } from "lucide-react";
 
 interface User {
   id: string;
@@ -31,18 +32,46 @@ export function Header({ user }: HeaderProps) {
     <header className="border-b border-[#D4B5A0]/30 bg-[#F5F1EA]">
       <div className="max-w-7xl mx-auto px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-3">
+          <Link href={user ? "/dashboard" : "/"} className="flex items-center">
             <Image 
               src="/logo.png" 
               alt="Panecho Logo" 
-              width={40} 
-              height={40}
+              width={60} 
+              height={60}
               className="rounded-lg"
             />
-            <span className="font-serif text-2xl text-[#2C2C2C]">Panecho</span>
           </Link>
 
-          <div className="flex items-center gap-6">{user ? (
+          <div className="flex items-center gap-6">
+            {/* Social Links */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://www.linkedin.com/in/semilogo-oketola/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#5C5C5C] hover:text-[#2C2C2C] transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://github.com/itswkosi" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#5C5C5C] hover:text-[#2C2C2C] transition-colors"
+              >
+                <Github className="h-5 w-5" />
+              </a>
+              <a 
+                href="https://medium.com/@semilogooketola" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#5C5C5C] hover:text-[#2C2C2C] transition-colors"
+              >
+                <BookOpen className="h-5 w-5" />
+              </a>
+            </div>
+
+            {user ? (
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 hover:bg-[#E5DDD5]">
