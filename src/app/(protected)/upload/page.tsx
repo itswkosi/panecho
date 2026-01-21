@@ -222,162 +222,162 @@ export default function UploadPage() {
                 Drag and drop your files or click to browse. Maximum file size: 5MB
               </CardDescription>
             </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Upload Zone */}
-          <div
-            ref={dragRef}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center transition-colors cursor-pointer hover:border-blue-500 hover:bg-blue-50"
-            onClick={handleBrowseClick}
-          >
-            <div className="space-y-3">
-              <div className="text-4xl">📁</div>
-              <div className="space-y-1">
-                <p className="text-lg font-medium text-slate-900">
-                  Drag and drop your files here
-                </p>
-                <p className="text-sm text-slate-500">
-                  or click to browse from your computer
-                </p>
-              </div>
-              <p className="text-xs text-slate-400 pt-2">
-                Supported formats: DICOM (.dcm), PNG, JPEG
-              </p>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".dcm,.png,.jpg,.jpeg"
-              onChange={(e) => handleFileSelect(e.target.files)}
-              className="hidden"
-            />
-          </div>
-
-          {/* Error Messages */}
-          {uploadError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-              {uploadError}
-            </div>
-          )}
-
-          {uploadSuccess && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
-              {uploadSuccess}
-            </div>
-          )}
-
-          {/* Valid Files List */}
-          {validFiles.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-medium text-slate-900">
-                Valid Files ({validFiles.length})
-              </h3>
-              <div className="space-y-2">
-                {validFiles.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200"
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="text-2xl">✓</div>
-                      <div className="flex-1">
-                        <p className="font-medium text-slate-900 truncate">
-                          {item.file.name}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {getFileSize(item.file.size)}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      ✕
-                    </button>
+            <CardContent className="space-y-6">
+              {/* Upload Zone */}
+              <div
+                ref={dragRef}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                className="border-2 border-dashed border-[#D4B5A0] rounded-lg p-12 text-center transition-colors cursor-pointer hover:border-[#C4A590] hover:bg-[#E5DDD5]/30"
+                onClick={handleBrowseClick}
+              >
+                <div className="space-y-3">
+                  <div className="text-4xl">📁</div>
+                  <div className="space-y-1">
+                    <p className="text-lg font-medium text-[#2C2C2C]">
+                      Drag and drop your files here
+                    </p>
+                    <p className="text-sm text-[#5C5C5C]">
+                      or click to browse from your computer
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Invalid Files List */}
-          {invalidFiles.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="font-medium text-slate-900">
-                Invalid Files ({invalidFiles.length})
-              </h3>
-              <div className="space-y-2">
-                {invalidFiles.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-red-50 p-3 rounded-lg border border-red-200"
-                  >
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="text-2xl">✕</div>
-                      <div className="flex-1">
-                        <p className="font-medium text-red-900 truncate">
-                          {item.file.name}
-                        </p>
-                        <p className="text-sm text-red-700">{item.error}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFile(files.indexOf(item))}
-                      className="text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Upload Progress */}
-          {isUploading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Uploading...</span>
-                <span className="font-medium text-slate-900">{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
+                  <p className="text-xs text-[#8C8C8C] pt-2">
+                    Supported formats: DICOM (.dcm), PNG, JPEG
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept=".dcm,.png,.jpg,.jpeg"
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                  className="hidden"
                 />
               </div>
-            </div>
-          )}
 
-          {/* Upload Button */}
-          <Button
-            onClick={handleUpload}
-            disabled={validFiles.length === 0 || isUploading}
-            size="lg"
-            className="w-full bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C]"
-          >
-            {isUploading ? `Uploading... ${uploadProgress}%` : 'Analyze Scan'}
-          </Button>
-        </CardContent>
-      </Card>
+              {/* Error Messages */}
+              {uploadError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {uploadError}
+                </div>
+              )}
 
-      {/* Upload Tips */}
-      <Card className="border-[#D4B5A0]/30">
-        <CardHeader>
-          <CardTitle className="text-base text-[#2C2C2C]">Upload Tips</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm space-y-2 text-[#5C5C5C]">
-          <p>• DICOM files (.dcm) are the standard format for medical CT scans</p>
-          <p>• PNG and JPEG formats are also supported for compatibility</p>
-          <p>• Maximum file size is 5MB per file</p>
-          <p>• Your files are encrypted and securely stored</p>
-        </CardContent>
-      </Card>
+              {uploadSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                  {uploadSuccess}
+                </div>
+              )}
+
+              {/* Valid Files List */}
+              {validFiles.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-medium text-slate-900">
+                    Valid Files ({validFiles.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {validFiles.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="text-2xl">✓</div>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900 truncate">
+                              {item.file.name}
+                            </p>
+                            <p className="text-sm text-slate-500">
+                              {getFileSize(item.file.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="text-slate-400 hover:text-slate-600 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Invalid Files List */}
+              {invalidFiles.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-medium text-slate-900">
+                    Invalid Files ({invalidFiles.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {invalidFiles.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-red-50 p-3 rounded-lg border border-red-200"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="text-2xl">✕</div>
+                          <div className="flex-1">
+                            <p className="font-medium text-red-900 truncate">
+                              {item.file.name}
+                            </p>
+                            <p className="text-sm text-red-700">{item.error}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFile(files.indexOf(item))}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Progress */}
+              {isUploading && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Uploading...</span>
+                    <span className="font-medium text-slate-900">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <Button
+                onClick={handleUpload}
+                disabled={validFiles.length === 0 || isUploading}
+                size="lg"
+                className="w-full bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C]"
+              >
+                {isUploading ? `Uploading... ${uploadProgress}%` : 'Analyze Scan'}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Upload Tips */}
+          <Card className="border-[#D4B5A0]/30">
+            <CardHeader>
+              <CardTitle className="text-base text-[#2C2C2C]">Upload Tips</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-2 text-[#5C5C5C]">
+              <p>• DICOM files (.dcm) are the standard format for medical CT scans</p>
+              <p>• PNG and JPEG formats are also supported for compatibility</p>
+              <p>• Maximum file size is 5MB per file</p>
+              <p>• Your files are encrypted and securely stored</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
