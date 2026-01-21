@@ -179,13 +179,22 @@ export default function UploadPage() {
           setUploadProgress(0);
           
           // Trigger background processing via API
+          console.log(`[Upload] Triggering analysis for scan ${result.data.scanId}`);
           fetch('/api/process-scan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ scanId: result.data.scanId }),
-          }).catch(err => {
-            console.error('Failed to trigger processing:', err);
-          });
+          })
+            .then(res => {
+              console.log('[Upload] Processing API response:', res.status);
+              return res.json();
+            })
+            .then(data => {
+              console.log('[Upload] Processing started:', data);
+            })
+            .catch(err => {
+              console.error('[Upload] Failed to trigger processing:', err);
+            });
           
           // Navigate to processing page
           router.push(`/processing/${result.data.scanId}`);

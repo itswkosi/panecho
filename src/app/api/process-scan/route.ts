@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeInitialScan } from '@/app/actions/analyze';
 
+// Set max execution duration for Vercel (60 seconds)
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 /**
  * API endpoint to trigger scan processing
  * Runs the full analysis and returns when complete
@@ -43,6 +47,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Set runtime to nodejs and max duration for analysis
-export const maxDuration = 60; // 60 seconds max

@@ -20,6 +20,8 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
   const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number | undefined>(
     undefined
   );
+  const [showRetry, setShowRetry] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   // Redirect to results when processing completes
   useEffect(() => {
@@ -32,6 +34,16 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
       return () => clearTimeout(timer);
     }
   }, [status, scanId, router]);
+
+  // Detect if processing is stuck (no progress after 30 seconds)
+  useEffect(() => {
+    if (status === 'pending') {
+      const timer = setTimeout(() => {
+        setShowRetry(true);
+      }, 30000); // Show retry after 30 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   // Calculate and update estimated time remaining
   useEffect(() => {
@@ -48,6 +60,26 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
       return () => clearInterval(updateTimer);
     }
   }, [status, startTime]);
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    setShowRetry(false);
+    try {
+      const response = await fetch('/api/process-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scanId }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to start processing');
+      }
+    } catch (err) {
+      console.error('Retry failed:', err);
+      setShowRetry(true);
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F1EA]">
@@ -92,6 +124,21 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
           <div className="mt-8 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#D4B5A0]/30 border-t-[#D4B5A0]" />
             <p className="mt-2 text-[#5C5C5C]">Checking scan status...</p>
+          </div>
+        )}
+
+        {/* Retry button if processing hasn't started */}
+        {showRetry && status === 'pending' && (
+          <div className="mt-8 rounded-lg bg-yellow-50 border border-yellow-200 p-6 text-center">
+            <h2 className="text-lg font-semibold text-yellow-900">Processing Delayed</h2>
+            <p className="mt-2 text-yellow-700">Analysis hasn't started yet. This may be due to high server load.</p>
+            <button
+              onClick={handleRetry}
+              disabled={retrying}
+              className="mt-4 inline-block rounded-lg bg-[#D4B5A0] px-6 py-2 font-semibold text-[#2C2C2C] hover:bg-[#C4A590] disabled:opacity-50"
+            >
+              {retrying ? 'Starting Analysis...' : 'Start Analysis Now'}
+            </button>
           </div>
         )}
       </div>
