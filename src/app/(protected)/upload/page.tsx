@@ -177,6 +177,16 @@ export default function UploadPage() {
         if (result.data?.scanId && i === 0) {
           setFiles([]);
           setUploadProgress(0);
+          
+          // Trigger background processing via API
+          fetch('/api/process-scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scanId: result.data.scanId }),
+          }).catch(err => {
+            console.error('Failed to trigger processing:', err);
+          });
+          
           // Navigate to processing page
           router.push(`/processing/${result.data.scanId}`);
           return;

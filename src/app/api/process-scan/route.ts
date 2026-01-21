@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { analyzeInitialScan } from '@/app/actions/analyze';
 
 /**
- * API endpoint to trigger scan processing asynchronously
- * Called immediately after upload to process scans in the background
+ * API endpoint to trigger scan processing
+ * Runs the full analysis and returns when complete
  */
 export async function POST(request: NextRequest) {
   try {
@@ -16,17 +16,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trigger analysis asynchronously - don't wait for completion
-    analyzeInitialScan(scanId).catch(error => {
-      console.error(`Background analysis failed for scan ${scanId}:`, error);
-    });
+    console.log(`[API] Starting analysis for scan ${scanId}`);
 
-    return NextResponse.json({ success: true, message: 'Processing started' });
+    // Run analysis and wait for completion
+    const result = await analyzeInitialScan(scanId);
+
+    if (result.success) {
+      console.log(`[API] Analysis completed successfully for scan ${scanId}`);
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Processing completed',
+        data: result.data
+      });
+    } else {
+      console.error(`[API] Analysis failed for scan ${scanId}:`, result.error);
+      return NextResponse.json(
+        { error: result.error?.userMessage || 'Analysis failed' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error('Process scan API error:', error);
+    console.error('[API] Process scan error:', error);
     return NextResponse.json(
-      { error: 'Failed to start processing' },
+      { error: 'Failed to process scan' },
       { status: 500 }
     );
   }
 }
+
+// Set runtime to nodejs and max duration for analysis
+export const maxDuration = 60; // 60 seconds max
