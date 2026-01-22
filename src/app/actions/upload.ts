@@ -152,9 +152,9 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
         key_slices: mockKeySlices,
       });
 
-      // Track usage - both old and new systems
-      await trackUsage(user.id);
-      await trackScanUsage(user.id);
+      // Track usage - TEMPORARILY DISABLED due to schema mismatch
+      // await trackUsage(user.id);
+      // await trackScanUsage(user.id);
 
       // Track analytics
       const fileSizeMb = file.size / (1024 * 1024);
