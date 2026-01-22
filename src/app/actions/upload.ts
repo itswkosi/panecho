@@ -36,20 +36,20 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
       );
     }
 
-    // Check usage limit
-    const usageLimit = await checkUsageLimit(user.id);
-    if (!usageLimit.canUpload) {
-      trackUsageLimitReached();
-      return createErrorResponse(
-        {
-          code: ErrorCode.API_RATE_LIMIT,
-          message: `User ${user.id} has exceeded upload limit`,
-          userMessage: `You've reached your limit of 5 scans this month. Your limit resets on ${usageLimit.resetDate.toLocaleDateString()}.`,
-          recoverable: false,
-        },
-        0
-      );
-    }
+    // Check usage limit - TEMPORARILY DISABLED due to schema mismatch
+    // const usageLimit = await checkUsageLimit(user.id);
+    // if (!usageLimit.canUpload) {
+    //   trackUsageLimitReached();
+    //   return createErrorResponse(
+    //     {
+    //       code: ErrorCode.API_RATE_LIMIT,
+    //       message: `User ${user.id} has exceeded upload limit`,
+    //       userMessage: `You've reached your limit of 5 scans this month. Your limit resets on ${usageLimit.resetDate.toLocaleDateString()}.`,
+    //       recoverable: false,
+    //     },
+    //     0
+    //   );
+    // }
 
     // Get file from form data
     const file = formData.get('file') as File;

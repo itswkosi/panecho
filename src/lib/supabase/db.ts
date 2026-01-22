@@ -75,6 +75,8 @@ export async function createScan(data: InsertScan): Promise<Scan> {
 export async function getScan(scanId: string): Promise<Scan | null> {
   const supabase = getServerClient();
 
+  console.log(`[getScan] Attempting to fetch scan: ${scanId}`);
+
   const { data: scan, error } = await supabase
     .from('scans')
     .select('*')
@@ -83,7 +85,14 @@ export async function getScan(scanId: string): Promise<Scan | null> {
 
   if (error && error.code !== 'PGRST116') {
     // PGRST116 is "no rows found"
+    console.error(`[getScan] Error fetching scan ${scanId}:`, error);
     throw new Error(`Failed to retrieve scan: ${error.message}`);
+  }
+
+  if (!scan) {
+    console.log(`[getScan] Scan ${scanId} not found in database`);
+  } else {
+    console.log(`[getScan] Scan ${scanId} found, status: ${scan.processing_status}, has key_slices: ${!!scan.key_slices}`);
   }
 
   return scan ? formatScanFromDB(scan) : null;
