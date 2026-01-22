@@ -135,11 +135,11 @@ export async function analyzeInitialScan(
       });
     });
 
-    console.log('Calling GPT-4o API for analysis...');
+    console.log('Calling GPT-5.2 Pro API for analysis...');
 
-    // Call GPT-4o with vision
+    // Call GPT-5.2 Pro with vision
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.2-pro',
       max_tokens: 1000, // Reduced for faster response
       temperature: 0.3, // Lower temperature for more consistent medical judgments
       response_format: { type: 'json_object' },

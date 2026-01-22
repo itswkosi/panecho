@@ -113,7 +113,7 @@ export async function analyzeLongitudinal(
       const comparisonPrompt = buildComparisonPrompt(newScanAnalysis, previousAnalyses);
 
       const comparisonResponse = await client.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.2-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: comparisonPrompt },
@@ -164,7 +164,7 @@ export async function analyzeLongitudinal(
       });
 
       const trajectoryResponse = await client.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.2-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: trajectoryPrompt },
@@ -217,7 +217,7 @@ export async function analyzeLongitudinal(
       );
 
       const synthesisResponse = await client.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.2-pro',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: synthesisPrompt },
