@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     } else {
       console.error(`[API] Analysis failed for scan ${scanId}:`, result.error);
       return NextResponse.json(
-        { error: result.error?.userMessage || 'Analysis failed' },
+        { error: result.error?.message || 'Analysis failed' },
         { status: 500 }
       );
     }

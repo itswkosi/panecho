@@ -65,6 +65,7 @@ export interface InsertScan {
   scan_date: Date;
   clinical_context: ClinicalContext;
   dicom_metadata?: DICOMMetadata;
+  key_slices?: string[];
 }
 
 export interface Analysis {
