@@ -22,6 +22,30 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
   );
   const [showRetry, setShowRetry] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [apiTriggered, setApiTriggered] = useState(false);
+
+  // Trigger analysis immediately when page loads if status is pending
+  useEffect(() => {
+    if (status === 'pending' && !apiTriggered) {
+      console.log('[ProcessingPage] Status is pending, triggering analysis...');
+      setApiTriggered(true);
+      fetch('/api/process-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scanId }),
+      })
+        .then(res => {
+          console.log('[ProcessingPage] API response:', res.status);
+          return res.json();
+        })
+        .then(data => {
+          console.log('[ProcessingPage] API result:', data);
+        })
+        .catch(err => {
+          console.error('[ProcessingPage] API error:', err);
+        });
+    }
+  }, [status, scanId, apiTriggered]);
 
   // Redirect to results when processing completes
   useEffect(() => {

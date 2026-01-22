@@ -11,9 +11,13 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { scanId } = await request.json();
+    console.log('[API] /api/process-scan called');
+    const body = await request.json();
+    console.log('[API] Request body:', body);
+    const { scanId } = body;
 
     if (!scanId) {
+      console.error('[API] Missing scanId in request');
       return NextResponse.json(
         { error: 'scanId is required' },
         { status: 400 }
@@ -24,6 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Run analysis and wait for completion
     const result = await analyzeInitialScan(scanId);
+    console.log(`[API] analyzeInitialScan returned:`, { success: result.success, hasError: !!result.error });
 
     if (result.success) {
       console.log(`[API] Analysis completed successfully for scan ${scanId}`);
