@@ -64,6 +64,7 @@ export async function analyzeInitialScan(scanId: string): Promise<AnalyzeResult>
 
       // Check if scan has key slices (required for analysis)
       if (!scan.key_slices || scan.key_slices.length === 0) {
+        console.error(`[analyzeInitialScan] Scan ${scanId} missing key_slices. Status: ${scan.processing_status}`);
         return createErrorResponse({
           code: ErrorCode.INVALID_API_RESPONSE,
           message: 'No processed slices available',
@@ -71,6 +72,8 @@ export async function analyzeInitialScan(scanId: string): Promise<AnalyzeResult>
           recoverable: true,
         }, retryCount);
       }
+
+      console.log(`[analyzeInitialScan] Scan ${scanId} validated. Slices: ${scan.key_slices.length}, Status: ${scan.processing_status}`);
 
       // Update status to processing
       await updateScan(scanId, {
@@ -247,6 +250,7 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
 
       // Check if scan has key slices (required for analysis)
       if (!scan.key_slices || scan.key_slices.length === 0) {
+        console.error(`[analyzeScanWithLongitudinal] Scan ${scanId} missing key_slices. Status: ${scan.processing_status}`);
         return createErrorResponse({
           code: ErrorCode.INVALID_API_RESPONSE,
           message: 'No processed slices available',
@@ -254,6 +258,8 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
           recoverable: true,
         }, retryCount);
       }
+
+      console.log(`[analyzeScanWithLongitudinal] Scan ${scanId} validated. Slices: ${scan.key_slices.length}, Status: ${scan.processing_status}`);
 
       // Update status to processing
       await updateScan(scanId, {

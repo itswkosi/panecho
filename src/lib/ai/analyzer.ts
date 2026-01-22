@@ -75,13 +75,34 @@ function validateAnalysisResponse(data: any): AnalysisResponse {
  * @returns Base64 encoded image
  */
 async function fetchImageAsBase64(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image from ${url}: ${response.statusText}`);
-  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-  const buffer = await response.arrayBuffer();
-  return Buffer.from(buffer).toString('base64');
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image from ${url}: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    console.log(`Fetching image: ${url.substring(0, 100)}... (type: ${contentType})`);
+
+    const buffer = await response.arrayBuffer();
+    if (buffer.byteLength === 0) {
+      throw new Error(`Empty image file from ${url}`);
+    }
+    
+    console.log(`Successfully fetched image: ${buffer.byteLength} bytes`);
+    return Buffer.from(buffer).toString('base64');
+  } catch (error) {
+    clearTimeout(timeout);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Image fetch timeout after 30s: ${url}`);
+    }
+    throw error;
+  }
 }
 
 /**

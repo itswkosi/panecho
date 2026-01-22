@@ -53,7 +53,7 @@ export async function createScan(data: InsertScan): Promise<Scan> {
       dicom_metadata: data.dicom_metadata || null,
       processing_status: 'pending',
       error_message: null,
-      key_slices: null,
+      key_slices: data.key_slices || null,
       retention_expires_at: retentionExpiresAt.toISOString(),
       retention_extended_count: 0,
     })
