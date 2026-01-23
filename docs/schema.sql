@@ -57,6 +57,14 @@ CREATE POLICY IF NOT EXISTS scans_delete_own
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- RLS Policy: Service role can access all scans (needed for backend operations)
+CREATE POLICY IF NOT EXISTS scans_service_role_all
+  ON public.scans
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 -- ============================================================================
 -- 2. ANALYSES TABLE
 -- ============================================================================
@@ -112,6 +120,14 @@ CREATE POLICY IF NOT EXISTS analyses_delete_own
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- RLS Policy: Service role can access all analyses (needed for backend operations)
+CREATE POLICY IF NOT EXISTS analyses_service_role_all
+  ON public.analyses
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 -- ============================================================================
 -- 3. USAGE_TRACKING TABLE
 -- ============================================================================
@@ -152,6 +168,14 @@ CREATE POLICY IF NOT EXISTS usage_tracking_update_own
   TO authenticated
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
+
+-- RLS Policy: Service role can access all usage tracking (needed for backend operations)
+CREATE POLICY IF NOT EXISTS usage_tracking_service_role_all
+  ON public.usage_tracking
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
 -- ============================================================================
 -- 4. DATABASE FUNCTIONS
