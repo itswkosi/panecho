@@ -156,32 +156,31 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
 
       console.log('[uploadScan] Scan created successfully:', createdScan.id);
 
-      // Track usage - TEMPORARILY DISABLED due to schema mismatch
-      // await trackUsage(user.id);
-      // await trackScanUsage(user.id);
+      // Use the actual scanId from the database, not the pre-generated one
+      const actualScanId = createdScan.id;
 
       // Track analytics
       const fileSizeMb = file.size / (1024 * 1024);
       const fileType = file.name.toLowerCase().endsWith('.dcm') ? 'dicom' : 'image';
       trackScanUploaded(fileType, fileSizeMb, false);
+
+      console.log('[uploadScan] Upload complete, returning scanId:', actualScanId);
+
+      return {
+        success: true,
+        data: { scanId: actualScanId, fileUrl },
+      };
     } catch (dbError) {
       // File uploaded successfully, but database record failed
       // Log error but return success - user can still access the file
       console.error('[uploadScan] Failed to create scan record:', dbError);
 
-      // Still return success since file is saved
+      // Still return success since file is saved with the pre-generated scanId
       return {
         success: true,
         data: { scanId, fileUrl },
       };
     }
-
-    console.log('[uploadScan] Upload complete, returning scanId:', scanId);
-
-    return {
-      success: true,
-      data: { scanId, fileUrl },
-    };
   } catch (error) {
     const appError = handleError(error, 'uploadScan_general');
     trackError('uploadScan', true);
