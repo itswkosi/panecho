@@ -7,13 +7,13 @@ import { EducationalContent } from '@/components/processing/EducationalContent';
 import { useProcessingStatus } from '@/lib/hooks/useProcessingStatus';
 
 interface ProcessingPageProps {
-  params: Promise<{
+  params: {
     scanId: string;
-  }>;
+  };
 }
 
 export default function ProcessingPage({ params }: ProcessingPageProps) {
-  const [scanId, setScanId] = useState<string>('');
+  const scanId = params.scanId;
   const router = useRouter();
   const { status, error, isLoading } = useProcessingStatus(scanId);
   const [startTime] = useState(() => Date.now());
@@ -24,23 +24,24 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
   const [retrying, setRetrying] = useState(false);
   const [apiTriggered, setApiTriggered] = useState(false);
 
-  // Resolve params first
-  useEffect(() => {
-    params.then(p => setScanId(p.scanId));
-  }, [params]);
-
   // Trigger analysis immediately when page loads if status is pending
   useEffect(() => {
+    console.log('[ProcessingPage] Effect triggered. Status:', status, 'ScanId:', scanId, 'ApiTriggered:', apiTriggered);
+    
     if (status === 'pending' && !apiTriggered && scanId) {
-      console.log('[ProcessingPage] Status is pending, triggering analysis...', scanId);
+      console.log('[ProcessingPage] Triggering analysis for scanId:', scanId);
       setApiTriggered(true);
+      
+      const requestBody = { scanId };
+      console.log('[ProcessingPage] Request body:', JSON.stringify(requestBody));
+      
       fetch('/api/process-scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scanId }),
+        body: JSON.stringify(requestBody),
       })
         .then(res => {
-          console.log('[ProcessingPage] API response:', res.status);
+          console.log('[ProcessingPage] API response status:', res.status);
           return res.json();
         })
         .then(data => {
