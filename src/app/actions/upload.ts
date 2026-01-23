@@ -140,8 +140,10 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
     // Using uploaded file URL as placeholder - in production, would convert DICOM to PNG slices
     const mockKeySlices = [fileUrl]; // Use the uploaded file itself
 
+    console.log('[uploadScan] Creating scan in database...', { userId: user.id, fileUrl, fileName: file.name });
+
     try {
-      await createScan({
+      const createdScan = await createScan({
         user_id: user.id,
         file_url: fileUrl,
         file_name: file.name,
@@ -151,6 +153,8 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
         clinical_context: clinicalContext,
         key_slices: mockKeySlices,
       });
+
+      console.log('[uploadScan] Scan created successfully:', createdScan.id);
 
       // Track usage - TEMPORARILY DISABLED due to schema mismatch
       // await trackUsage(user.id);
@@ -163,7 +167,7 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
     } catch (dbError) {
       // File uploaded successfully, but database record failed
       // Log error but return success - user can still access the file
-      console.error('Failed to create scan record:', dbError);
+      console.error('[uploadScan] Failed to create scan record:', dbError);
 
       // Still return success since file is saved
       return {
@@ -171,6 +175,8 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
         data: { scanId, fileUrl },
       };
     }
+
+    console.log('[uploadScan] Upload complete, returning scanId:', scanId);
 
     return {
       success: true,
