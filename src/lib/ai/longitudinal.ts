@@ -1,4 +1,4 @@
-import { openai as client } from '@/lib/ai/client';
+import { geminiVision as client } from '@/lib/ai/client';
 import {
   buildComparisonPrompt,
   buildTrajectoryPrompt,
@@ -112,20 +112,19 @@ export async function analyzeLongitudinal(
     try {
       const comparisonPrompt = buildComparisonPrompt(newScanAnalysis, previousAnalyses);
 
-      const comparisonResponse = await client.chat.completions.create({
-        model: 'gpt-5.2-pro',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: comparisonPrompt },
+      const comparisonResponse = await client.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `${systemPrompt}\n\n${comparisonPrompt}` }],
+          },
         ],
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        max_tokens: 2000,
       });
 
-      totalTokens += comparisonResponse.usage?.total_tokens || 0;
+      const comparisonResult = await comparisonResponse.response;
+      totalTokens += comparisonResult.usageMetadata?.totalTokenCount || 0;
 
-      const comparisonContent = comparisonResponse.choices[0]?.message?.content;
+      const comparisonContent = comparisonResult.text();
       if (comparisonContent) {
         try {
           const comparisonParsed = JSON.parse(comparisonContent);
@@ -163,20 +162,19 @@ export async function analyzeLongitudinal(
         smoking_status: 'never',
       });
 
-      const trajectoryResponse = await client.chat.completions.create({
-        model: 'gpt-5.2-pro',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: trajectoryPrompt },
+      const trajectoryResponse = await client.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `${systemPrompt}\n\n${trajectoryPrompt}` }],
+          },
         ],
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        max_tokens: 1500,
       });
 
-      totalTokens += trajectoryResponse.usage?.total_tokens || 0;
+      const trajectoryResult = await trajectoryResponse.response;
+      totalTokens += trajectoryResult.usageMetadata?.totalTokenCount || 0;
 
-      const trajectoryContent = trajectoryResponse.choices[0]?.message?.content;
+      const trajectoryContent = trajectoryResult.text();
       if (trajectoryContent) {
         try {
           const trajectoryParsed = JSON.parse(trajectoryContent);
@@ -216,20 +214,19 @@ export async function analyzeLongitudinal(
         result.trajectory_results
       );
 
-      const synthesisResponse = await client.chat.completions.create({
-        model: 'gpt-5.2-pro',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: synthesisPrompt },
+      const synthesisResponse = await client.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: `${systemPrompt}\n\n${synthesisPrompt}` }],
+          },
         ],
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        max_tokens: 2000,
       });
 
-      totalTokens += synthesisResponse.usage?.total_tokens || 0;
+      const synthesisResult = await synthesisResponse.response;
+      totalTokens += synthesisResult.usageMetadata?.totalTokenCount || 0;
 
-      const synthesisContent = synthesisResponse.choices[0]?.message?.content;
+      const synthesisContent = synthesisResult.text();
       if (synthesisContent) {
         try {
           const synthesisParsed = JSON.parse(synthesisContent);

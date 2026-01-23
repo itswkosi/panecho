@@ -22,7 +22,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env.local
-# Add your Supabase and OpenAI credentials
+# Add your Supabase and Gemini API credentials
 
 # Run development server
 npm run dev
@@ -36,7 +36,7 @@ npm run dev
 
 ### Core Features
 - ✅ **DICOM Upload** - Support for medical imaging format
-- ✅ **AI Analysis** - GPT-4o-mini powered pancreatic assessment
+- ✅ **AI Analysis** - Google Gemini 2.0 Flash powered pancreatic assessment
 - ✅ **Risk Scoring** - Quantitative risk score (0-100)
 - ✅ **Anatomical Analysis** - Detailed chamber and valve assessment
 - ✅ **Clinical Recommendations** - Actionable next steps

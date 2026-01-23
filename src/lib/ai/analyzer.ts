@@ -1,6 +1,6 @@
 'use server';
 
-import { openai } from '@/lib/ai/client';
+import { geminiVision } from '@/lib/ai/client';
 import { getSystemPrompt, getUserPrompt } from '@/lib/ai/prompts';
 import { ClinicalContext, DetailedFindings } from '@/lib/types/database';
 
@@ -136,59 +136,53 @@ export async function analyzeInitialScan(
     const systemPrompt = getSystemPrompt();
     const userPrompt = getUserPrompt(clinicalContext);
 
-    // Build message content with text + images
-    const messageContent: any[] = [
-      {
-        type: 'text',
-        text: userPrompt,
-      },
+    // Combine system and user prompts for Gemini
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
+    // Build Gemini content parts with text and images
+    const parts: any[] = [
+      { text: fullPrompt },
     ];
 
-    // Add images with auto detail for faster processing
-    // 'auto' is significantly faster than 'high' while still providing good accuracy
-    sliceImages.forEach((img, index) => {
-      messageContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:image/png;base64,${img}`,
-          detail: 'auto', // Faster processing than 'high'
+    // Add images as inline data
+    sliceImages.forEach((img) => {
+      parts.push({
+        inlineData: {
+          mimeType: 'image/png',
+          data: img, // base64 string without data URL prefix
         },
       });
     });
 
-    console.log('Calling GPT-5.2 Pro API for analysis...');
+    console.log('Calling Gemini 2.0 Flash API for analysis...');
 
-    // Call GPT-5.2 Pro with vision
-    const response = await openai.chat.completions.create({
-      model: 'gpt-5.2-pro',
-      max_tokens: 1000, // Reduced for faster response
-      temperature: 0.3, // Lower temperature for more consistent medical judgments
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
+    // Call Gemini with vision
+    const result = await geminiVision.generateContent({
+      contents: [
         {
           role: 'user',
-          content: messageContent,
+          parts,
         },
       ],
     });
 
-    // Extract response content
-    const responseContent = response.choices[0]?.message?.content;
-    if (!responseContent) {
-      throw new Error('Empty response from GPT-4o API.');
+    // Extract response text
+    const response = await result.response;
+    const responseText = response.text();
+    
+    if (!responseText) {
+      throw new Error('Empty response from Gemini API.');
     }
 
-    // Parse JSON response
+    console.log('Gemini response received, parsing JSON...');
+
+    // Parse JSON response - Gemini should return JSON due to prompt instructions
     let parsedResponse: AnalysisResponse;
     try {
-      parsedResponse = JSON.parse(responseContent);
+      parsedResponse = JSON.parse(responseText);
     } catch (err) {
       throw new Error(
-        `Failed to parse GPT-4o response as JSON: ${responseContent.substring(0, 200)}...`
+        `Failed to parse Gemini response as JSON: ${responseText.substring(0, 200)}...`
       );
     }
 
@@ -198,11 +192,16 @@ export async function analyzeInitialScan(
     // Calculate processing time
     const processingTime = Math.round((Date.now() - startTime) / 1000);
 
-    console.log(`Analysis complete. Risk score: ${validatedResponse.risk_score}, Processing time: ${processingTime}s`);
+    // Get token counts from Gemini
+    const promptTokens = response.usageMetadata?.promptTokenCount || 0;
+    const candidatesTokens = response.usageMetadata?.candidatesTokenCount || 0;
+    const totalTokens = response.usageMetadata?.totalTokenCount || 0;
+
+    console.log(`Analysis complete. Risk score: ${validatedResponse.risk_score}, Processing time: ${processingTime}s, Tokens: ${totalTokens}`);
 
     return {
       ...validatedResponse,
-      tokens_used: response.usage?.total_tokens || 0,
+      tokens_used: totalTokens,
       processing_time_seconds: processingTime,
     };
   } catch (error) {
@@ -211,12 +210,12 @@ export async function analyzeInitialScan(
     // Enhance error message with context
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    if (errorMessage.includes('rate limit')) {
-      throw new Error(`OpenAI rate limit exceeded: ${errorMessage}`);
+    if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
+      throw new Error(`Gemini rate limit exceeded: ${errorMessage}`);
     }
 
-    if (errorMessage.includes('API key')) {
-      throw new Error(`OpenAI API key error: ${errorMessage}`);
+    if (errorMessage.includes('API key') || errorMessage.includes('API_KEY')) {
+      throw new Error(`Gemini API key error: ${errorMessage}`);
     }
 
     throw new Error(`Analysis failed after ${processingTime}s: ${errorMessage}`);

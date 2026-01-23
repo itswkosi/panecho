@@ -20,7 +20,7 @@ export interface AnalyzeResult extends ServerActionResponse<{
 }> {}
 
 /**
- * Server action to analyze a scan using GPT-4o
+ * Server action to analyze a scan using Google Gemini 2.0 Flash
  * Orchestrates: fetch scan, validate, run analysis, save to DB
  * Implements error handling with user-friendly messages and retry logic
  */
@@ -113,7 +113,7 @@ export async function analyzeInitialScan(scanId: string): Promise<AnalyzeResult>
           risk_score: analysisResult.risk_score,
           ai_summary: analysisResult.summary,
           detailed_findings: analysisResult.detailed_findings,
-          gpt_model_used: 'gpt-5.2-pro',
+          gpt_model_used: 'gemini-2.0-flash-exp',
           tokens_used: analysisResult.tokens_used,
           processing_time_seconds: analysisResult.processing_time_seconds,
           slices_analyzed: scan.key_slices.map((_, idx) => idx),
@@ -297,7 +297,7 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
         risk_score: analysisResult.risk_score,
         ai_summary: analysisResult.summary,
         detailed_findings: analysisResult.detailed_findings,
-        gpt_model_used: 'gpt-5.2-pro',
+        gpt_model_used: 'gemini-2.0-flash-exp',
         tokens_used: analysisResult.tokens_used,
         processing_time_seconds: analysisResult.processing_time_seconds,
         slices_analyzed: scan.key_slices.map((_, idx) => idx),
@@ -369,7 +369,7 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
               trajectory_results: longitudinalResult.trajectory_results,
             },
             compared_scan_ids: longitudinalResult.compared_scan_ids,
-            gpt_model_used: 'gpt-5.2-pro',
+            gpt_model_used: 'gemini-2.0-flash-exp',
             tokens_used: longitudinalResult.tokens_used,
             processing_time_seconds: longitudinalResult.processing_time_seconds,
             slices_analyzed: scan.key_slices.map((_, idx) => idx),
