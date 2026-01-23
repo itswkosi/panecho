@@ -127,7 +127,13 @@ export async function analyzeLongitudinal(
       const comparisonContent = comparisonResult.text();
       if (comparisonContent) {
         try {
-          const comparisonParsed = JSON.parse(comparisonContent);
+          // Remove markdown code blocks if present
+          let jsonText = comparisonContent.trim();
+          const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+          if (codeBlockMatch) {
+            jsonText = codeBlockMatch[1].trim();
+          }
+          const comparisonParsed = JSON.parse(jsonText);
           result.comparison_results = {
             size_changes: comparisonParsed.size_changes || [],
             new_findings: comparisonParsed.new_findings || [],
@@ -177,7 +183,13 @@ export async function analyzeLongitudinal(
       const trajectoryContent = trajectoryResult.text();
       if (trajectoryContent) {
         try {
-          const trajectoryParsed = JSON.parse(trajectoryContent);
+          // Remove markdown code blocks if present
+          let jsonText = trajectoryContent.trim();
+          const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+          if (codeBlockMatch) {
+            jsonText = codeBlockMatch[1].trim();
+          }
+          const trajectoryParsed = JSON.parse(jsonText);
           result.trajectory_results = {
             direction: trajectoryParsed.direction || 'stable',
             rate: trajectoryParsed.rate || 'static',
@@ -229,7 +241,13 @@ export async function analyzeLongitudinal(
       const synthesisContent = synthesisResult.text();
       if (synthesisContent) {
         try {
-          const synthesisParsed = JSON.parse(synthesisContent);
+          // Remove markdown code blocks if present
+          let jsonText = synthesisContent.trim();
+          const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+          if (codeBlockMatch) {
+            jsonText = codeBlockMatch[1].trim();
+          }
+          const synthesisParsed = JSON.parse(jsonText);
           result.synthesis_report = {
             executive_summary: synthesisParsed.executive_summary || '',
             current_assessment: synthesisParsed.current_assessment || '',

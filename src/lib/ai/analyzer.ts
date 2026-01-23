@@ -176,10 +176,17 @@ export async function analyzeInitialScan(
 
     console.log('Gemini response received, parsing JSON...');
 
-    // Parse JSON response - Gemini should return JSON due to prompt instructions
+    // Parse JSON response - strip markdown code blocks if present
     let parsedResponse: AnalysisResponse;
     try {
-      parsedResponse = JSON.parse(responseText);
+      // Remove markdown code blocks (```json ... ``` or ``` ... ```)
+      let jsonText = responseText.trim();
+      const codeBlockMatch = jsonText.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (codeBlockMatch) {
+        jsonText = codeBlockMatch[1].trim();
+      }
+      
+      parsedResponse = JSON.parse(jsonText);
     } catch (err) {
       throw new Error(
         `Failed to parse Gemini response as JSON: ${responseText.substring(0, 200)}...`
