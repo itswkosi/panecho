@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { analyzeInitialScan } from '@/lib/ai/analyzer';
-import { openai } from '@/lib/ai/client';
+import { geminiVision } from '@/lib/ai/client';
 
 vi.mock('@/lib/ai/client');
 vi.mock('node-fetch', () => ({
@@ -11,6 +11,20 @@ describe('AI Analyzer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  // Helper function to create Gemini mock response
+  const mockGeminiResponse = (analysisData: any, totalTokens = 1500) => {
+    vi.mocked(geminiVision.generateContent).mockResolvedValue({
+      response: Promise.resolve({
+        text: () => JSON.stringify(analysisData),
+        usageMetadata: {
+          promptTokenCount: Math.floor(totalTokens * 0.7),
+          candidatesTokenCount: Math.floor(totalTokens * 0.3),
+          totalTokenCount: totalTokens,
+        },
+      }),
+    } as any);
+  };
 
   describe('Valid Analysis Responses', () => {
     it('returns valid analysis structure for normal scan', async () => {
@@ -27,16 +41,7 @@ describe('AI Analyzer', () => {
           'Given patient age (55) and lack of specific symptoms, normal imaging findings support benign assessment.',
       };
 
-      vi.mocked(openai.chat.completions.create).mockResolvedValue({
-        choices: [
-          {
-            message: {
-              content: JSON.stringify(mockResponse),
-            },
-          },
-        ],
-        usage: { total_tokens: 1500 },
-      } as any);
+      mockGeminiResponse(mockResponse, 1500);
 
       // Mock fetch for image download
       global.fetch = vi.fn().mockResolvedValue({
