@@ -46,7 +46,7 @@ vercel link
 vercel env add GEMINI_API_KEY
 
 # When prompted:
-# - Paste value: AIzaSyDvwws0wfh_hOtJOnXwOUGCKadktjJk5lw
+# - Paste value: [API_KEY]
 # - Select environments: Production, Preview, Development (all)
 
 # Deploy
@@ -57,7 +57,7 @@ vercel --prod
 
 1. Create a file named `.env.production` with:
    ```env
-   GEMINI_API_KEY=AIzaSyDvwws0wfh_hOtJOnXwOUGCKadktjJk5lw
+   GEMINI_API_KEY= [API_KEY]
    ```
 2. In Vercel Dashboard → Settings → Environment Variables
 3. Click "Import .env" and upload the file
