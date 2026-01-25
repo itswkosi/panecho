@@ -30,11 +30,13 @@ export function useProcessingStatus(scanId: string): ProcessingStatusResult {
 
     const pollStatus = async () => {
       try {
+        console.log('[useProcessingStatus] Polling scan:', scanId);
         const scan = await getScan(scanId);
 
         if (!isMountedRef.current) return;
 
         if (scan) {
+          console.log('[useProcessingStatus] Scan status:', scan.processing_status);
           setStatus(scan.processing_status);
 
           if (scan.error_message) {
@@ -46,17 +48,21 @@ export function useProcessingStatus(scanId: string): ProcessingStatusResult {
             scan.processing_status === 'completed' ||
             scan.processing_status === 'failed'
           ) {
+            console.log('[useProcessingStatus] Processing complete, stopping poll');
             setIsLoading(false);
             if (intervalRef.current) {
               clearInterval(intervalRef.current);
             }
             return;
           }
+        } else {
+          console.warn('[useProcessingStatus] Scan not found:', scanId);
         }
 
         setIsLoading(false);
       } catch (err) {
         if (isMountedRef.current) {
+          console.error('[useProcessingStatus] Error:', err);
           setError(err instanceof Error ? err.message : 'Failed to fetch processing status');
           setIsLoading(false);
         }

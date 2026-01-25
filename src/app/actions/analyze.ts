@@ -120,9 +120,11 @@ export async function analyzeInitialScan(scanId: string): Promise<AnalyzeResult>
         });
 
         // Update scan status to completed
+        console.log(`[analyzeInitialScan] Updating scan ${scanId} status to completed`);
         await updateScan(scanId, {
           processing_status: 'completed',
         });
+        console.log(`[analyzeInitialScan] Scan ${scanId} status updated successfully`);
 
         console.log(
           `Analysis saved for scan ${scanId}: ${analysisResult.classification} (risk: ${analysisResult.risk_score}%)`
