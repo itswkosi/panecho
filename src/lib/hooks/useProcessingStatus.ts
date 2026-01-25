@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getScan } from '@/lib/supabase/db';
+import { createClient } from '@/lib/supabase/client';
 
 interface ProcessingStatusResult {
   status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -10,7 +10,7 @@ interface ProcessingStatusResult {
 }
 
 /**
- * Hook to poll scan processing status every 2 seconds
+ * Hook to poll scan processing status every 3 seconds
  * Stops polling when status is 'completed' or 'failed'
  */
 export function useProcessingStatus(scanId: string): ProcessingStatusResult {
@@ -27,43 +27,53 @@ export function useProcessingStatus(scanId: string): ProcessingStatusResult {
     }
 
     isMountedRef.current = true;
+    const supabase = createClient();
 
     const pollStatus = async () => {
       try {
         console.log('[useProcessingStatus] Polling scan:', scanId);
-        const scan = await getScan(scanId);
+        
+        const { data: scan, error: fetchError } = await supabase
+          .from('scans')
+          .select('processing_status, error_message')
+          .eq('id', scanId)
+          .single();
 
         if (!isMountedRef.current) return;
 
-        if (scan) {
-          console.log('[useProcessingStatus] Scan status:', scan.processing_status);
-          setStatus(scan.processing_status);
+        if (fetchError) {
+          console.error('[useProcessingStatus] Error:', fetchError);
+          setError('Failed to fetch scan status');
+          setIsLoading(false);
+          return;
+        }
 
+        if (scan) {
+          console.log('[useProcessingStatus] Status:', scan.processing_status);
+          setStatus(scan.processing_status);
+          
           if (scan.error_message) {
             setError(scan.error_message);
           }
+
+          setIsLoading(false);
 
           // Stop polling when processing is done
           if (
             scan.processing_status === 'completed' ||
             scan.processing_status === 'failed'
           ) {
-            console.log('[useProcessingStatus] Processing complete, stopping poll');
-            setIsLoading(false);
+            console.log('[useProcessingStatus] Done, stopping poll');
             if (intervalRef.current) {
               clearInterval(intervalRef.current);
             }
             return;
           }
-        } else {
-          console.warn('[useProcessingStatus] Scan not found:', scanId);
         }
-
-        setIsLoading(false);
       } catch (err) {
         if (isMountedRef.current) {
           console.error('[useProcessingStatus] Error:', err);
-          setError(err instanceof Error ? err.message : 'Failed to fetch processing status');
+          setError(err instanceof Error ? err.message : 'Failed to check status');
           setIsLoading(false);
         }
       }
@@ -73,7 +83,7 @@ export function useProcessingStatus(scanId: string): ProcessingStatusResult {
     pollStatus();
 
     // Set up polling interval
-    intervalRef.current = setInterval(pollStatus, 2000);
+    intervalRef.current = setInterval(pollStatus, 3000);
 
     return () => {
       isMountedRef.current = false;
