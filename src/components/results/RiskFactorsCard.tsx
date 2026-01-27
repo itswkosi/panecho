@@ -113,8 +113,8 @@ export function RiskFactorsCard({ detailedFindings, riskScore }: RiskFactorsCard
   const displayedFactors = expanded ? factors : factors.slice(0, 2);
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
-      <h3 className="text-xl font-serif font-medium text-slate-900 mb-4">Risk Factors Identified</h3>
+    <div className="bg-white rounded-lg p-8 shadow-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Risk Factors Identified</h3>
       
       <div className="space-y-4">
         {displayedFactors.map((factor, index) => (

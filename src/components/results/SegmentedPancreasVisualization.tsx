@@ -54,23 +54,40 @@ export function SegmentedPancreasVisualization({
 
   return (
     <div 
-      className={`bg-white rounded-lg shadow-sm ${isFullscreen ? 'fixed inset-0 z-50 p-8' : 'p-6'}`}
+      className={`bg-white rounded-lg shadow-sm ${isFullscreen ? 'fixed inset-0 z-50 p-8' : 'p-8'}`}
       ref={containerRef}
+      style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-serif font-medium text-slate-900">Scan Visualization</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-serif" style={{ color: '#2C2520', fontWeight: 400 }}>Scan Visualization</h3>
         <div className="flex items-center gap-2">
           <button onClick={handleZoomOut} disabled={zoom <= 0.5}
-            className="p-2 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" title="Zoom out">
+            className="p-2 rounded transition-colors" 
+            style={{ 
+              backgroundColor: zoom <= 0.5 ? '#F5F1EA' : 'white',
+              color: zoom <= 0.5 ? '#C4B5A0' : '#6B5E52',
+              opacity: zoom <= 0.5 ? 0.5 : 1,
+              cursor: zoom <= 0.5 ? 'not-allowed' : 'pointer'
+            }} 
+            title="Zoom out">
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-sm text-slate-600 min-w-[4rem] text-center">{Math.round(zoom * 100)}%</span>
+          <span className="text-sm min-w-[4rem] text-center" style={{ color: '#6B5E52' }}>{Math.round(zoom * 100)}%</span>
           <button onClick={handleZoomIn} disabled={zoom >= 3}
-            className="p-2 rounded hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" title="Zoom in">
+            className="p-2 rounded transition-colors" 
+            style={{ 
+              backgroundColor: zoom >= 3 ? '#F5F1EA' : 'white',
+              color: zoom >= 3 ? '#C4B5A0' : '#6B5E52',
+              opacity: zoom >= 3 ? 0.5 : 1,
+              cursor: zoom >= 3 ? 'not-allowed' : 'pointer'
+            }}
+            title="Zoom in">
             <ZoomIn className="w-4 h-4" />
           </button>
           <button onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2 rounded hover:bg-slate-100 transition-colors ml-2" title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
+            className="p-2 rounded transition-colors ml-2" 
+            style={{ color: '#6B5E52' }}
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}>
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
         </div>

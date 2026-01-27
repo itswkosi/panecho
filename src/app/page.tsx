@@ -14,7 +14,7 @@ export default async function HomePage() {
           <div className="grid lg:grid-cols-2 gap-10 items-center mb-12">
             <div>
               <h1 className="text-5xl font-serif text-[#2C2C2C] mb-4 leading-tight">
-                Welcome to Panecho
+                Welcome to PanEcho
               </h1>
               <p className="text-lg text-[#2C2C2C] mb-4 font-light">
                 Longitudinal CT radiomics for early pancreatic cancer detection.
@@ -64,7 +64,7 @@ export default async function HomePage() {
           <div className="max-w-7xl mx-auto px-8">
             <div className="text-center mb-10">
               <h2 className="text-4xl font-serif text-[#2C2C2C] mb-2">
-                How Panecho Works
+                How PanEcho Works
               </h2>
               <p className="text-base text-[#5C5C5C]">
                 From CT scan to longitudinal analysis
@@ -114,7 +114,7 @@ export default async function HomePage() {
             </div>
             <div>
               <h2 className="text-3xl font-serif text-[#2C2C2C] mb-6">
-                Try Panecho for Yourself
+                Try PanEcho for Yourself
               </h2>
               <div className="bg-white rounded-lg p-6 shadow-lg border border-[#D4B5A0]">
                 <div className="flex items-center justify-between mb-4">

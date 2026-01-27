@@ -52,11 +52,11 @@ function LoginPageContent() {
       <Card className="w-full max-w-md border-[#D4B5A0]/30 shadow-lg">
         <CardHeader className="space-y-2">
           <div className="text-center">
-            <h1 className="text-3xl font-serif text-[#2C2C2C]">Panecho</h1>
+            <h1 className="text-3xl font-serif text-[#2C2C2C]">PanEcho</h1>
             <p className="text-sm text-[#5C5C5C] mt-1">Pancreatic Cancer Screening</p>
           </div>
           <CardTitle className="text-center text-[#2C2C2C]">Sign In</CardTitle>
-          <CardDescription className="text-center text-[#5C5C5C]">Enter your credentials to access Panecho</CardDescription>
+          <CardDescription className="text-center text-[#5C5C5C]">Enter your credentials to access PanEcho</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

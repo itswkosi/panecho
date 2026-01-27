@@ -96,8 +96,10 @@ export function RadiomicFeaturesCard({ detailedFindings }: RadiomicFeaturesCardP
   };
 
   const getStatusIcon = (status: 'warning' | 'normal' | 'elevated') => {
-    if (status === 'elevated' || status === 'warning') {
-      return '⚠️';
+    if (status === 'elevated') {
+      return '●';
+    } else if (status === 'warning') {
+      return '◐';
     }
     return '○';
   };
@@ -117,21 +119,21 @@ export function RadiomicFeaturesCard({ detailedFindings }: RadiomicFeaturesCardP
   const displayedFeatures = expanded ? features : features.slice(0, 3);
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
-      <h3 className="text-xl font-serif font-medium text-slate-900 mb-4">Radiomic Features</h3>
+    <div className="bg-white rounded-lg p-8 shadow-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Radiomic Features</h3>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         {displayedFeatures.map((feature, index) => (
-          <div key={index} className="border-b border-slate-100 pb-3 last:border-b-0">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className={getStatusColor(feature.status)}>{getStatusIcon(feature.status)}</span>
-                <span className="text-sm font-medium text-slate-900">{feature.name}</span>
+          <div key={index} className="pb-4 last:pb-0" style={{ borderBottom: index < displayedFeatures.length - 1 ? '1px solid #E8E2DB' : 'none' }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <span className={getStatusColor(feature.status)} style={{ fontSize: '16px' }}>{getStatusIcon(feature.status)}</span>
+                <span className="text-base font-medium" style={{ color: '#2C2520' }}>{feature.name}</span>
               </div>
-              <span className="text-sm font-semibold text-slate-700">{feature.value.toFixed(1)}</span>
+              <span className="text-base font-semibold" style={{ color: '#3D3530' }}>{feature.value.toFixed(1)}</span>
             </div>
             {expanded && (
-              <p className="text-xs text-slate-600 mt-1 ml-6">{feature.description}</p>
+              <p className="text-sm mt-2 ml-8" style={{ color: '#6B5E52', lineHeight: '1.6' }}>{feature.description}</p>
             )}
           </div>
         ))}

@@ -48,8 +48,8 @@ export function SimilarScansWidget({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm">
-      <h3 className="text-xl font-serif font-medium text-slate-900 mb-4">Similar Scans</h3>
+    <div className="bg-white rounded-lg p-8 shadow-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Similar Scans</h3>
       <div className="space-y-3">
         {similarScans.map((scan) => {
           const badge = getRiskBadge(scan.classification, scan.riskScore);
@@ -58,10 +58,10 @@ export function SimilarScansWidget({
             <Link
               key={scan.id}
               href={`/results/${scan.id}`}
-              className="flex items-center gap-4 p-3 rounded-lg hover:bg-slate-50 transition-colors border border-slate-200"
+              className="flex items-center gap-4 p-4 rounded-lg transition-colors"
+              style={{ border: '1px solid #E8E2DB', backgroundColor: 'white' }}
             >
-              <div className="w-16 h-16 bg-slate-200 rounded flex-shrink-0 flex items-center justify-center text-slate-400 text-xs font-medium">
-                Scan
+              <div className="w-16 h-16 rounded flex-shrink-0" style={{ backgroundColor: '#E8E2DB' }}>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900">

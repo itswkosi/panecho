@@ -204,28 +204,28 @@ export default function ResultsPage({ params }: ResultsPageProps) {
     : [];
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
-      <div className="max-w-7xl mx-auto px-6 py-6">
+    <div className="min-h-screen" style={{ backgroundColor: '#F5F1EA' }}>
+      <div className="max-w-[1400px] mx-auto px-8 py-8">
         {/* Breadcrumb Navigation */}
-        <nav className="mb-6 text-sm text-slate-600">
-          <Link href="/dashboard" className="hover:text-slate-900">Dashboard</Link>
+        <nav className="mb-8 text-sm" style={{ color: '#6B5E52' }}>
+          <Link href="/dashboard" className="hover:opacity-80 transition-opacity">Dashboard</Link>
           <span className="mx-2">›</span>
-          <span className="text-slate-400">Patient 001</span>
+          <span style={{ color: '#8B7E72' }}>Patient 001</span>
           <span className="mx-2">›</span>
-          <span className="text-slate-900 font-medium">Scan {scan?.file_name?.slice(0, 6) || '03'}</span>
+          <span className="font-medium" style={{ color: '#3D3530' }}>Scan {scan?.file_name?.slice(0, 6) || '03'}</span>
         </nav>
 
         {/* Page Title */}
-        <h1 className="text-4xl font-serif font-medium text-slate-900 mb-8">Scan Analysis Results</h1>
+        <h1 className="text-5xl font-serif mb-12" style={{ color: '#2C2520', fontWeight: 400 }}>Scan Analysis Results</h1>
 
-        {/* Hero Section - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Top Row: Patient Info (Left) + Scan Image (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Left Column - Patient Info Card */}
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <div className="flex items-start justify-between mb-4">
+          <div className="bg-white rounded-lg p-8 shadow-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <div className="flex items-start justify-between mb-6">
               <div>
-                <h2 className="text-xs text-slate-500 uppercase tracking-wide mb-1">Patient 001</h2>
-                <p className="text-lg font-medium text-slate-900">
+                <h2 className="text-sm font-medium mb-2" style={{ color: '#6B5E52', letterSpacing: '0.05em' }}>Patient 001</h2>
+                <p className="text-xl font-serif" style={{ color: '#2C2520' }}>
                   Scan {scan?.file_name?.slice(0, 6) || '03'} · CT Abdomen
                 </p>
               </div>
@@ -236,13 +236,13 @@ export default function ResultsPage({ params }: ResultsPageProps) {
             </div>
             
             {/* AI Observation Box */}
-            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded">
-              <p className="text-sm font-semibold text-amber-900 mb-1">🤖 AI Observation:</p>
-              <p className="text-sm text-amber-800">{analysis.ai_summary}</p>
+            <div className="rounded-lg p-5 mb-4" style={{ backgroundColor: '#FFF9F0', borderLeft: '4px solid #E8B86D' }}>
+              <p className="text-sm font-semibold mb-2" style={{ color: '#8B6914' }}>AI Observation:</p>
+              <p className="text-sm leading-relaxed" style={{ color: '#6B5E52' }}>{analysis.ai_summary}</p>
             </div>
 
             {/* Download Report Button */}
-            <div className="mt-4">
+            <div>
               <PDFDownloadButton scanId={scanId} />
             </div>
           </div>
@@ -255,53 +255,119 @@ export default function ResultsPage({ params }: ResultsPageProps) {
               scanId={scanId}
             />
           ) : (
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <div className="flex items-center justify-center h-96 bg-slate-100 rounded-lg">
-                <p className="text-slate-400">No scan visualization available</p>
+            <div className="bg-white rounded-lg p-6 shadow-sm" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <div className="flex items-center justify-center h-96 rounded-lg" style={{ backgroundColor: '#F5F1EA' }}>
+                <p style={{ color: '#8B7E72' }}>No scan visualization available</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Features Grid - 2 Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Middle Row: Radiomic Features (Left) + Risk Factors (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Left Column - Radiomic Features */}
           <RadiomicFeaturesCard detailedFindings={analysis.detailed_findings} />
 
-          {/* Right Column - Longitudinal & Risk Factors */}
-          <div className="space-y-6">
-            {/* Longitudinal Analysis Card */}
-            {isLongitudinal && previousAnalyses.length > 0 && (
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-xl font-serif font-medium text-slate-900 mb-4">Longitudinal Analysis</h3>
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-slate-700 mb-2">Risk Probability</h4>
-                  <TimelineVisualization scans={timelineScans} />
-                </div>
-              </div>
-            )}
-
-            {/* Risk Factors Card */}
-            <RiskFactorsCard 
-              detailedFindings={analysis.detailed_findings} 
-              riskScore={analysis.risk_score} 
-            />
-          </div>
+          {/* Right Column - Risk Factors */}
+          <RiskFactorsCard 
+            detailedFindings={analysis.detailed_findings} 
+            riskScore={analysis.risk_score} 
+          />
         </div>
 
-        {/* Similar Scans Section */}
-        {allUserScans.length > 1 && (
-          <div className="mb-6">
-            <SimilarScansWidget 
-              allScans={allUserScans}
-              currentScanId={scanId}
-              currentClassification={analysis.classification as 'normal' | 'suspicious'}
-            />
+        {/* Longitudinal Analysis Section */}
+        {isLongitudinal && previousAnalyses.length > 0 && (
+          <div className="bg-white rounded-lg p-8 shadow-sm mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Longitudinal Analysis</h3>
+            <div>
+              <h4 className="text-sm font-medium mb-4" style={{ color: '#6B5E52' }}>Risk Probability Over Time</h4>
+              <TimelineVisualization scans={timelineScans} />
+            </div>
+            <div className="mt-6 pt-6" style={{ borderTop: '1px solid #E8E4DD' }}>
+              <h4 className="text-sm font-medium mb-3" style={{ color: '#6B5E52' }}>Change Summary</h4>
+              <p className="text-sm leading-relaxed" style={{ color: '#6B5E52' }}>
+                {analysis.risk_score > (previousAnalyses[previousAnalyses.length - 1]?.risk_score || 0)
+                  ? 'Risk score has increased compared to previous scan, indicating progression of concerning features.'
+                  : 'Risk score has remained stable or decreased, suggesting stable or improving pancreatic health.'}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Collapsible Detailed Analysis */}
-        <div className="mb-6">
+        {/* Next Steps Section */}
+        <div className="bg-white rounded-lg p-8 shadow-sm mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+          <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Next Steps</h3>
+          
+          <div className="space-y-6">
+            {/* Clinical Recommendations */}
+            <div>
+              <h4 className="text-sm font-medium mb-3" style={{ color: '#6B5E52' }}>Clinical Recommendations</h4>
+              <ul className="space-y-2">
+                {analysis.classification === 'suspicious' ? (
+                  <>
+                    <li className="flex items-start text-sm" style={{ color: '#6B5E52' }}>
+                      <span className="mr-2" style={{ color: '#E8B86D' }}>●</span>
+                      <span>Consult with a gastroenterologist or oncologist for further evaluation</span>
+                    </li>
+                    <li className="flex items-start text-sm" style={{ color: '#6B5E52' }}>
+                      <span className="mr-2" style={{ color: '#E8B86D' }}>●</span>
+                      <span>Consider additional imaging studies (MRI, endoscopic ultrasound) for comprehensive assessment</span>
+                    </li>
+                    <li className="flex items-start text-sm" style={{ color: '#6B5E52' }}>
+                      <span className="mr-2" style={{ color: '#E8B86D' }}>●</span>
+                      <span>Laboratory tests including tumor markers (CA 19-9) may be recommended</span>
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="flex items-start text-sm" style={{ color: '#6B5E52' }}>
+                      <span className="mr-2" style={{ color: '#E8B86D' }}>●</span>
+                      <span>Continue routine monitoring with follow-up imaging in 6-12 months</span>
+                    </li>
+                    <li className="flex items-start text-sm" style={{ color: '#6B5E52' }}>
+                      <span className="mr-2" style={{ color: '#E8B86D' }}>●</span>
+                      <span>Maintain healthy lifestyle habits to support pancreatic health</span>
+                    </li>
+                    <li className="flex items-start text-sm" style={{ color: '#6B5E52' }}>
+                      <span className="mr-2" style={{ color: '#E8B86D' }}>●</span>
+                      <span>Report any new symptoms to your healthcare provider promptly</span>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+
+            {/* Follow-up Timeline */}
+            <div>
+              <h4 className="text-sm font-medium mb-3" style={{ color: '#6B5E52' }}>Recommended Follow-up</h4>
+              <div className="rounded-lg p-4" style={{ backgroundColor: '#FFF9F0' }}>
+                <p className="text-sm" style={{ color: '#6B5E52' }}>
+                  {analysis.classification === 'suspicious'
+                    ? 'Schedule follow-up consultation within 2-4 weeks for comprehensive evaluation and treatment planning.'
+                    : 'Next routine scan recommended in 6-12 months, or sooner if symptoms develop.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Patient Actions */}
+            <div>
+              <h4 className="text-sm font-medium mb-3" style={{ color: '#6B5E52' }}>Your Actions</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button className="text-left p-4 rounded-lg border transition-colors hover:border-opacity-80" style={{ borderColor: '#E8B86D', backgroundColor: 'white' }}>
+                  <p className="font-medium mb-1" style={{ color: '#2C2520' }}>Download Report</p>
+                  <p className="text-xs" style={{ color: '#8B7E72' }}>Share results with your physician</p>
+                </button>
+                <button className="text-left p-4 rounded-lg border transition-colors hover:border-opacity-80" style={{ borderColor: '#E8B86D', backgroundColor: 'white' }}>
+                  <p className="font-medium mb-1" style={{ color: '#2C2520' }}>Schedule Consultation</p>
+                  <p className="text-xs" style={{ color: '#8B7E72' }}>Book appointment with specialist</p>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Disclaimer */}
+        <div className="mb-8">
           <Disclaimer />
         </div>
       </div>

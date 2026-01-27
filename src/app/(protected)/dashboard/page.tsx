@@ -9,7 +9,7 @@ export default function DashboardPage() {
         <div className="space-y-8">
           <div>
             <h1 className="text-4xl font-serif text-[#2C2C2C]">Dashboard</h1>
-            <p className="text-[#5C5C5C] mt-2">Welcome to Panecho - Your CT scan analysis platform</p>
+            <p className="text-[#5C5C5C] mt-2">Welcome to PanEcho - Your CT scan analysis platform</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
@@ -47,7 +47,7 @@ export default function DashboardPage() {
           <Card className="border-[#D4B5A0]/30">
             <CardHeader>
               <CardTitle className="text-[#2C2C2C]">Getting Started</CardTitle>
-              <CardDescription className="text-[#5C5C5C]">Next steps to use Panecho</CardDescription>
+              <CardDescription className="text-[#5C5C5C]">Next steps to use PanEcho</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">

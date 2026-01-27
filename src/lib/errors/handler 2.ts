@@ -72,7 +72,7 @@ const ERROR_MESSAGES: Record<ErrorCode, { userMessage: string; recoverable: bool
   },
   [ErrorCode.UNKNOWN_ERROR]: {
     userMessage:
-      'An unexpected error occurred. Please try again. If this continues, please contact support at support@panecho.io.',
+      'An unexpected error occurred. Please try again. If this continues, please contact support at support@panecho.io.',,
     recoverable: true,
   },
 };
