@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
 
 interface ProcessingStatusResult {
   status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -12,6 +11,7 @@ interface ProcessingStatusResult {
 /**
  * Hook to poll scan processing status every 3 seconds
  * Stops polling when status is 'completed' or 'failed'
+ * Uses API endpoint to bypass RLS issues
  */
 export function useProcessingStatus(scanId: string): ProcessingStatusResult {
   const [status, setStatus] = useState<'pending' | 'processing' | 'completed' | 'failed'>('pending');
@@ -27,26 +27,24 @@ export function useProcessingStatus(scanId: string): ProcessingStatusResult {
     }
 
     isMountedRef.current = true;
-    const supabase = createClient();
 
     const pollStatus = async () => {
       try {
         console.log('[useProcessingStatus] Polling scan:', scanId);
         
-        const { data: scan, error: fetchError } = await supabase
-          .from('scans')
-          .select('processing_status, error_message')
-          .eq('id', scanId)
-          .single();
-
+        // Use API endpoint instead of direct Supabase client to bypass RLS
+        const response = await fetch(`/api/scan-status?scanId=${scanId}`);
+        
         if (!isMountedRef.current) return;
 
-        if (fetchError) {
-          console.error('[useProcessingStatus] Error:', fetchError);
+        if (!response.ok) {
+          console.error('[useProcessingStatus] API error:', response.status);
           setError('Failed to fetch scan status');
           setIsLoading(false);
           return;
         }
+
+        const scan = await response.json();
 
         if (scan) {
           console.log('[useProcessingStatus] Status:', scan.processing_status);

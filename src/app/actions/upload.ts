@@ -22,21 +22,10 @@ const MAX_FILE_SIZE_MB = 5; // DICOM files typically 2-5MB
  */
 export async function uploadScan(formData: FormData): Promise<UploadResult> {
   try {
-    // Get current user
-    const user = await getUser();
-    if (!user) {
-      return createErrorResponse(
-        {
-          code: ErrorCode.UNAUTHORIZED,
-          message: 'User not authenticated',
-          userMessage: 'You must be logged in to upload scans.',
-          recoverable: true,
-        },
-        0
-      );
-    }
-
-    // Check usage limit - TEMPORARILY DISABLED due to schema mismatch
+    // Demo mode - use a valid UUID for demo user
+    const user = { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd' };
+    
+    // Usage limits disabled for demo
     // const usageLimit = await checkUsageLimit(user.id);
     // if (!usageLimit.canUpload) {
     //   trackUsageLimitReached();

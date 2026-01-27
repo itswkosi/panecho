@@ -35,12 +35,21 @@ function getServerClient() {
 export async function createScan(data: InsertScan): Promise<Scan> {
   const supabase = getServerClient();
   const scanId = uuidv4();
+  
+  // Validate generated UUID
+  if (!scanId || typeof scanId !== 'string' || scanId.trim() === '') {
+    console.error('[createScan] CRITICAL: Failed to generate valid UUID!');
+    throw new Error('Failed to generate scan ID');
+  }
+  
   const now = new Date();
   const retentionExpiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days
 
-  console.log('[createScan] Generating new scan ID:', scanId);
+  console.log('[createScan] ===== CREATING NEW SCAN =====');
+  console.log('[createScan] Generated scan ID:', scanId);
   console.log('[createScan] User ID:', data.user_id);
   console.log('[createScan] File name:', data.file_name);
+  console.log('[createScan] File URL:', data.file_url);
 
   const { data: scan, error } = await supabase
     .from('scans')
@@ -74,9 +83,22 @@ export async function createScan(data: InsertScan): Promise<Scan> {
     throw new Error('Database returned no scan data');
   }
 
+  // Validate the returned scan has a valid ID
+  if (!scan.id || typeof scan.id !== 'string' || scan.id.trim() === '') {
+    console.error('[createScan] CRITICAL: Database returned scan without valid ID!', scan);
+    throw new Error('Database returned scan without valid ID');
+  }
+
   console.log('[createScan] Database insert successful, scan ID:', scan.id);
   const formattedScan = formatScanFromDB(scan);
   console.log('[createScan] Formatted scan ID:', formattedScan.id);
+  console.log('[createScan] ===== SCAN CREATION COMPLETE =====');
+  
+  // Final validation of formatted scan
+  if (!formattedScan.id || formattedScan.id.trim() === '') {
+    console.error('[createScan] CRITICAL: Formatted scan has invalid ID!');
+    throw new Error('Scan formatting produced invalid ID');
+  }
   
   return formattedScan;
 }

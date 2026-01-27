@@ -212,15 +212,49 @@ export default function UploadPage() {
         return;
       }
 
-      // Navigate to first scan's results page (or timeline for 3+ scans)
-      if (result.data?.scanIds.length === 1) {
-        router.push(`/results/${result.data.scanIds[0]}`);
-      } else if (result.data?.scanIds.length === 2 || result.data?.scanIds.length === 3) {
-        // TODO: Create timeline/comparison page for multiple scans
-        router.push(`/results/${result.data.scanIds[0]}`);
-      } else if (result.data?.scanIds && result.data.scanIds.length > 3) {
-        // More than 3 scans - show timeline
-        router.push(`/results/${result.data.scanIds[0]}`);
+      // Validate we received scan IDs
+      if (!result.data || !result.data.scanIds || result.data.scanIds.length === 0) {
+        console.error('[Upload] ERROR: Upload succeeded but no scan IDs returned', result);
+        setError({
+          code: ErrorCode.UNKNOWN_ERROR,
+          message: 'Upload completed but no scan IDs returned',
+          recoverable: true,
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Get the first scan ID for navigation
+      const primaryScanId = result.data.scanIds[0];
+      
+      // Validate the primary scan ID before navigation
+      if (!primaryScanId || typeof primaryScanId !== 'string' || primaryScanId.trim() === '') {
+        console.error('[Upload] ERROR: Invalid primary scan ID', { 
+          primaryScanId, 
+          type: typeof primaryScanId,
+          allScanIds: result.data.scanIds 
+        });
+        setError({
+          code: ErrorCode.UNKNOWN_ERROR,
+          message: 'Invalid scan ID generated',
+          recoverable: true,
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      console.log(`[Upload] Successfully uploaded ${result.data.scanIds.length} scan(s)`);
+      console.log(`[Upload] Primary scan ID: ${primaryScanId}`);
+      console.log(`[Upload] All scan IDs:`, result.data.scanIds);
+
+      // Navigate to processing page for the primary scan
+      if (result.data.scanIds.length === 1) {
+        console.log(`[Upload] Navigating to processing page: /processing/${primaryScanId}`);
+        router.push(`/processing/${primaryScanId}`);
+      } else if (result.data.scanIds.length > 1) {
+        // Multiple scans - navigate to first one (timeline view can be added later)
+        console.log(`[Upload] Multiple scans uploaded, navigating to: /processing/${primaryScanId}`);
+        router.push(`/processing/${primaryScanId}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');

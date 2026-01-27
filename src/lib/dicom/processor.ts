@@ -1,4 +1,6 @@
-import { DicomMessage } from 'dcmjs';
+import dcmjs from 'dcmjs';
+
+const { DicomMessage } = (dcmjs as any).data;
 
 export interface DICOMMetadata {
   patientAge?: string;

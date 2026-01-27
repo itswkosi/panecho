@@ -1,8 +1,9 @@
-import { type NextRequest } from "next/server";
-import { middleware as supabaseMiddleware } from "@/lib/supabase/middleware";
+import { type NextRequest, NextResponse } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  return await supabaseMiddleware(request);
+export default async function proxy(request: NextRequest) {
+  // Authentication disabled for demo purposes
+  // All routes are now publicly accessible
+  return NextResponse.next();
 }
 
 export const config = {

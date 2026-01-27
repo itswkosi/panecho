@@ -2,15 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
-import { getUser } from "@/app/actions/auth";
 import { ArrowRight, Upload, Settings, Activity, Database, Sparkles } from "lucide-react";
 
 export default async function HomePage() {
-  const user = await getUser();
-
   return (
     <>
-      <Header user={user} />
+      <Header />
       <div className="min-h-screen bg-[#F5F1EA]">
         {/* Hero + About Merged Section */}
         <div className="max-w-7xl mx-auto px-8 py-12">
@@ -31,7 +28,7 @@ export default async function HomePage() {
                 to explore subtle, longitudinal patterns that may signal{" "}
                 <span className="font-medium">pancreatic cancer progression</span>, potentially before conventional diagnosis.
               </p>
-              <Link href={user ? "/upload" : "/signup"}>
+              <Link href="/upload">
                 <Button 
                   className="bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C] rounded-none px-6 py-4 text-base"
                 >
@@ -107,7 +104,7 @@ export default async function HomePage() {
               <h2 className="text-3xl font-serif text-[#2C2C2C] mb-6 text-center">
                 Upload & Analyze
               </h2>
-              <Link href={user ? "/upload" : "/signup"}>
+              <Link href="/upload">
                 <Button 
                   className="bg-[#D4B5A0] hover:bg-[#C4A590] text-[#2C2C2C] rounded-none px-8 py-4 text-base"
                 >

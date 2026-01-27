@@ -2,16 +2,25 @@ import React from 'react';
 
 interface RiskScoreGaugeProps {
   score: number; // 0-100
+  lowerBound?: number; // Lower CI bound
+  upperBound?: number; // Upper CI bound
+  confidenceLevel?: number; // e.g., 0.95 for 95% CI
 }
 
 /**
  * Risk score gauge component
- * Horizontal bar with colored segments and position indicator
+ * Horizontal bar with colored segments, position indicator, and confidence interval shading
  */
-export function RiskScoreGauge({ score }: RiskScoreGaugeProps) {
+export function RiskScoreGauge({ score, lowerBound, upperBound, confidenceLevel = 0.95 }: RiskScoreGaugeProps) {
   // Clamp score between 0 and 100
   const clampedScore = Math.max(0, Math.min(100, score));
   const position = clampedScore; // Percentage position
+  
+  // Clamp CI bounds
+  const lower = lowerBound !== undefined ? Math.max(0, Math.min(100, lowerBound)) : null;
+  const upper = upperBound !== undefined ? Math.max(0, Math.min(100, upperBound)) : null;
+  
+  const hasConfidenceInterval = lower !== null && upper !== null;
 
   return (
     <div className="space-y-4">
@@ -19,6 +28,11 @@ export function RiskScoreGauge({ score }: RiskScoreGaugeProps) {
       <div className="text-center">
         <p className="text-5xl font-bold text-slate-900">{clampedScore}%</p>
         <p className="text-sm text-slate-600 mt-1">Risk Score</p>
+        {hasConfidenceInterval && (
+          <p className="text-xs text-slate-500 mt-2">
+            {(confidenceLevel * 100).toFixed(0)}% CI: {lower!.toFixed(1)}% - {upper!.toFixed(1)}%
+          </p>
+        )}
       </div>
 
       {/* Gauge container */}
@@ -33,6 +47,18 @@ export function RiskScoreGauge({ score }: RiskScoreGaugeProps) {
 
           {/* Red segment (70-100%) */}
           <div className="flex-1 bg-red-500" style={{ width: '30%' }}></div>
+
+          {/* Confidence interval shading */}
+          {hasConfidenceInterval && lower !== null && upper !== null && (
+            <div
+              className="absolute top-0 bottom-0 bg-slate-900/10 transition-all duration-300"
+              style={{
+                left: `${lower}%`,
+                width: `${upper - lower}%`,
+              }}
+              aria-label={`Confidence interval: ${lower.toFixed(1)}% to ${upper.toFixed(1)}%`}
+            />
+          )}
 
           {/* Position indicator */}
           <div

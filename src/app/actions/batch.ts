@@ -39,37 +39,10 @@ export async function uploadBatchScans(
   clinicalContext: ClinicalContext,
 ): Promise<BatchUploadResult> {
   try {
-    // Authenticate user
-    const user = await getUser();
-    if (!user) {
-      return createErrorResponse({
-        code: ErrorCode.UNAUTHORIZED,
-        message: 'User not authenticated',
-        userMessage: 'You must be logged in to upload scans.',
-        recoverable: true,
-      }, 0);
-    }
-
-    // Check usage limit
-    const usageLimit = await checkUsageLimit(user.id);
-    if (!usageLimit.canUpload) {
-      return createErrorResponse({
-        code: ErrorCode.API_RATE_LIMIT,
-        message: `User ${user.id} has exceeded upload limit`,
-        userMessage: `You've reached your limit of 5 scans this month. Your limit resets on ${usageLimit.resetDate.toLocaleDateString()}.`,
-        recoverable: false,
-      }, 0);
-    }
-
-    // Verify user has enough scans remaining for this batch
-    if (filesData.length > usageLimit.scansRemaining) {
-      return createErrorResponse({
-        code: ErrorCode.API_RATE_LIMIT,
-        message: `Batch size (${filesData.length}) exceeds remaining limit (${usageLimit.scansRemaining})`,
-        userMessage: `This batch contains ${filesData.length} scans but you only have ${usageLimit.scansRemaining} remaining. Your limit resets on ${usageLimit.resetDate.toLocaleDateString()}.`,
-        recoverable: false,
-      }, 0);
-    }
+    // Demo mode - use a valid UUID for demo user
+    const user = { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd' };
+    
+    // Usage limits disabled for demo
 
     // Validate files
     if (!filesData || filesData.length === 0) {
@@ -193,6 +166,7 @@ export async function uploadBatchScans(
 
         // Create scan record in database
         try {
+          console.log(`[uploadBatchScans] Creating scan for ${file.name}...`);
           const scan = await createScan({
             user_id: user.id,
             file_url: filePath,
@@ -203,11 +177,19 @@ export async function uploadBatchScans(
             clinical_context: clinicalContext,
           });
 
-          if (scan && scan.id) {
-            scanIds.push(scan.id);
-          } else {
+          // Validate scan ID is properly generated
+          if (!scan || !scan.id || scan.id.trim() === '') {
+            console.error(`[uploadBatchScans] ERROR: Invalid scan ID returned for ${file.name}`, { 
+              hasScan: !!scan, 
+              hasId: !!scan?.id, 
+              scanId: scan?.id 
+            });
             failedFiles.push(file.name);
+            continue;
           }
+
+          console.log(`[uploadBatchScans] Scan created successfully with ID: ${scan.id}`);
+          scanIds.push(scan.id);
         } catch (dbError) {
           const appError = handleError(dbError, 'uploadBatchScans_database');
           console.error(`Error creating scan record for ${file.name}:`, appError.message);

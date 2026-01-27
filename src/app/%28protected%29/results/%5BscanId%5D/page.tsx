@@ -225,7 +225,12 @@ export default function ResultsPage({ params }: ResultsPageProps) {
 
           {/* Risk Score Gauge */}
           <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <RiskScoreGauge score={Math.round(analysis.risk_score)} />
+            <RiskScoreGauge 
+              score={Math.round(analysis.risk_score)} 
+              lowerBound={analysis.risk_score_lower}
+              upperBound={analysis.risk_score_upper}
+              confidenceLevel={analysis.confidence_level}
+            />
           </div>
         </div>
 

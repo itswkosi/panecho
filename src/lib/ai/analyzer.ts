@@ -106,14 +106,16 @@ async function fetchImageAsBase64(url: string): Promise<string> {
 }
 
 /**
- * Analyzes initial scan using GPT-4o vision capabilities
+ * Analyzes initial scan using Gemini vision capabilities with optional radiomic features
  * @param sliceUrls - URLs of PNG slices to analyze
  * @param clinicalContext - Patient clinical context
+ * @param scanId - Optional scan ID to fetch radiomic features
  * @returns Analysis result with classification and risk score
  */
 export async function analyzeInitialScan(
   sliceUrls: string[],
-  clinicalContext: ClinicalContext
+  clinicalContext: ClinicalContext,
+  scanId?: string
 ): Promise<AnalysisResult> {
   if (!sliceUrls || sliceUrls.length === 0) {
     throw new Error('At least one slice URL is required for analysis.');
@@ -122,6 +124,21 @@ export async function analyzeInitialScan(
   const startTime = Date.now();
 
   try {
+    // TODO: Re-enable when radiomics implementation is ready
+    // Fetch radiomic features if scanId provided
+    let radiomicFeatures: any[] = [];
+    // Radiomic features temporarily disabled until implementation is complete
+    // if (scanId) {
+    //   try {
+    //     const { getRadiomicFeatures } = await import('@/app/actions/radiomics');
+    //     const features = await getRadiomicFeatures(scanId);
+    //     radiomicFeatures = features.slice(0, 15); // Top 15 features
+    //     console.log(`Fetched ${radiomicFeatures.length} radiomic features for analysis`);
+    //   } catch (error) {
+    //     console.warn('Failed to fetch radiomic features, proceeding without:', error);
+    //   }
+    // }
+
     // Fetch and convert images to base64
     console.log(`Fetching ${sliceUrls.length} slice images for analysis...`);
     const sliceImages = await Promise.all(
@@ -134,7 +151,7 @@ export async function analyzeInitialScan(
 
     // Build prompts
     const systemPrompt = getSystemPrompt();
-    const userPrompt = getUserPrompt(clinicalContext);
+    const userPrompt = getUserPrompt(clinicalContext, radiomicFeatures);
 
     // Combine system and user prompts for Gemini
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;

@@ -50,6 +50,8 @@ export interface Scan {
   clinical_context: ClinicalContext;
   dicom_metadata?: DICOMMetadata;
   processing_status: 'pending' | 'processing' | 'completed' | 'failed';
+  segmentation_status?: 'pending' | 'processing' | 'completed' | 'failed';
+  radiomics_status?: 'pending' | 'processing' | 'completed' | 'failed';
   error_message?: string;
   key_slices?: string[];
   retention_expires_at: Date;
@@ -75,6 +77,9 @@ export interface Analysis {
   analysis_type: 'initial' | 'longitudinal';
   classification: 'normal' | 'suspicious';
   risk_score: number;
+  risk_score_lower?: number;
+  risk_score_upper?: number;
+  confidence_level?: number;
   ai_summary: string;
   detailed_findings: DetailedFindings;
   compared_scan_ids?: string[];
@@ -84,6 +89,7 @@ export interface Analysis {
   processing_time_seconds?: number;
   slices_analyzed: number[];
   created_at: Date;
+  scan?: Scan;
 }
 
 export interface InsertAnalysis {
@@ -118,4 +124,38 @@ export interface UsageLimit {
   remaining: number;
   monthly_limit: number;
   scans_this_month: number;
+}
+
+export interface SegmentationResult {
+  id: string;
+  scan_id: string;
+  mask_url: string;
+  model_version: string;
+  confidence_score: number;
+  processing_time_ms: number;
+  retention_expires_at: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface RadiomicFeature {
+  id: string;
+  scan_id: string;
+  segmentation_id?: string;
+  feature_name: string;
+  mean_value: number;
+  std_deviation: number;
+  category: 'shape' | 'firstorder' | 'glcm' | 'glrlm' | 'glszm' | 'ngtdm' | 'gldm' | 'other';
+  shap_importance?: number;
+  created_at: Date;
+}
+
+export interface ModelPerformance {
+  id: string;
+  date: Date;
+  gemini_rf_mae: number;
+  gemini_rf_correlation: number;
+  sample_count: number;
+  notes?: string;
+  created_at: Date;
 }

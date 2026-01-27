@@ -16,7 +16,7 @@ Provide your assessment in a structured JSON format with clear classifications a
 Always consider patient age, clinical context, and typical imaging patterns for benign vs. malignant pathology.`;
 }
 
-export function buildUserPrompt(clinicalContext: ClinicalContext): string {
+export function buildUserPrompt(clinicalContext: ClinicalContext, radiomicFeatures?: any[]): string {
   const ageInfo = clinicalContext.age ? `Patient age: ${clinicalContext.age} years` : 'Patient age: Not provided';
   const symptomsInfo = clinicalContext.symptoms?.length
     ? `Reported symptoms: ${clinicalContext.symptoms.join(', ')}`
@@ -28,13 +28,24 @@ export function buildUserPrompt(clinicalContext: ClinicalContext): string {
     ? `Smoking status: ${clinicalContext.smoking_status}`
     : 'Smoking status: Unknown';
 
+  // Format radiomic features if available
+  let radiomicsSection = '';
+  if (radiomicFeatures && radiomicFeatures.length > 0) {
+    radiomicsSection = `\n\nQuantitative Radiomic Features (extracted from segmented pancreas):
+${radiomicFeatures.map(f => 
+  `- ${f.feature_name}: ${f.mean_value.toFixed(3)} (±${f.std_deviation.toFixed(3)}, importance: ${(f.shap_importance || 0).toFixed(3)})`
+).join('\n')}
+
+These radiomic features provide quantitative texture, shape, and intensity measurements. Higher importance scores indicate greater predictive value. Please integrate these quantitative findings with your visual analysis.`;
+  }
+
   return `Please analyze the provided pancreatic CT scan images and provide a detailed assessment.
 
 Clinical Context:
 - ${ageInfo}
 - ${symptomsInfo}
 - ${familyHistoryInfo}
-- ${smokingInfo}
+- ${smokingInfo}${radiomicsSection}
 
 Analyze all provided slices (showing different anatomical levels through the pancreas) and provide:
 
@@ -51,7 +62,7 @@ Analyze all provided slices (showing different anatomical levels through the pan
    - Areas of Concern: Specific regions or findings that influenced the risk score
    - Measurements: Any relevant measurements (if apparent size or location)
 
-5. Clinical Reasoning: Brief explanation of how patient age, symptoms, and other clinical context influenced your assessment
+5. Clinical Reasoning: Brief explanation of how patient age, symptoms, ${radiomicFeatures && radiomicFeatures.length > 0 ? 'quantitative radiomic features, ' : ''}and other clinical context influenced your assessment
 
 Return your response as a valid JSON object. Ensure risk_score is numeric (0-100) and classification is exactly "normal" or "suspicious".`;
 }
@@ -64,10 +75,10 @@ export function getSystemPrompt(): string {
 }
 
 /**
- * Builds the user prompt with clinical context interpolated
+ * Builds the user prompt with clinical context and optional radiomic features
  */
-export function getUserPrompt(clinicalContext: ClinicalContext): string {
-  return buildUserPrompt(clinicalContext);
+export function getUserPrompt(clinicalContext: ClinicalContext, radiomicFeatures?: any[]): string {
+  return buildUserPrompt(clinicalContext, radiomicFeatures);
 }
 
 /**

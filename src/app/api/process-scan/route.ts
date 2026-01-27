@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeInitialScan } from '@/app/actions/analyze';
+import { processDICOM } from '@/app/actions/process';
+import { getScan, updateScan } from '@/lib/supabase/db';
+// TODO: Re-enable when radiomics implementation is ready
+// import { 
+//   segmentPancreas, 
+//   extractRadiomicFeatures,
+//   storeSegmentationResult,
+//   storeRadiomicFeatures,
+//   checkPythonServiceHealth 
+// } from '@/app/actions/radiomics';
 
 // Set max execution duration for Vercel (60 seconds)
 export const maxDuration = 60;
@@ -34,7 +44,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[API] Starting analysis for scan ${scanId}`);
+    console.log(`[API] Starting processing pipeline for scan ${scanId}`);
+
+    // Step 1: Fetch scan details
+    const scan = await getScan(scanId);
+    if (!scan) {
+      console.error(`[API] Scan ${scanId} not found`);
+      return NextResponse.json(
+        { error: 'Scan not found' },
+        { status: 404 }
+      );
+    }
+
+    // Step 2: Process DICOM file (extract slices)
+    if (scan.file_type === 'dicom' && (!scan.key_slices || scan.key_slices.length === 0)) {
+      console.log(`[API] Processing DICOM for scan ${scanId}`);
+      
+      await updateScan(scanId, { processing_status: 'processing' });
+      
+      const processingResult = await processDICOM(scan.file_url, scanId);
+      
+      if (!processingResult.success) {
+        console.error(`[API] DICOM processing failed for scan ${scanId}:`, processingResult.error);
+        await updateScan(scanId, {
+          processing_status: 'failed',
+          error_message: processingResult.error?.message || 'DICOM processing failed',
+        });
+        return NextResponse.json(
+          { error: processingResult.error?.message || 'DICOM processing failed' },
+          { status: 500 }
+        );
+      }
+
+      console.log(`[API] DICOM processing successful: ${processingResult.data?.sliceUrls.length} slices extracted`);
+    }
+
+    // TODO: Re-enable when radiomics implementation is ready
+    // Step 3: Check Python service health and run segmentation
+    // Python service integration commented out until radiomics actions are implemented
+    console.log(`[API] Skipping segmentation (radiomics not yet implemented) for scan ${scanId}`);
+
+    // Step 5: Run Gemini analysis (with or without radiomics)
+    console.log(`[API] Starting AI analysis for scan ${scanId}`);
 
     // Run analysis and wait for completion
     const result = await analyzeInitialScan(scanId);

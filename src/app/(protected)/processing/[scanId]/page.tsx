@@ -1,19 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProgressIndicator } from '@/components/processing/ProgressIndicator';
 import { EducationalContent } from '@/components/processing/EducationalContent';
 import { useProcessingStatus } from '@/lib/hooks/useProcessingStatus';
 
 interface ProcessingPageProps {
-  params: {
+  params: Promise<{
     scanId: string;
-  };
+  }>;
 }
 
 export default function ProcessingPage({ params }: ProcessingPageProps) {
-  const scanId = params.scanId;
+  const { scanId } = use(params);
   const router = useRouter();
   const { status, error, isLoading } = useProcessingStatus(scanId);
   const [startTime] = useState(() => Date.now());
@@ -196,6 +196,7 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
           <div className="mt-8 rounded-lg bg-yellow-50 border border-yellow-200 p-6 text-center">
             <h2 className="text-lg font-semibold text-yellow-900">Processing Delayed</h2>
             <p className="mt-2 text-yellow-700">Analysis hasn't started yet. This may be due to high server load.</p>
+            <p className="mt-1 text-xs text-yellow-600 font-mono">Scan ID: {scanId}</p>
             <button
               onClick={handleRetry}
               disabled={retrying}

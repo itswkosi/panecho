@@ -30,16 +30,8 @@ export async function analyzeInitialScan(scanId: string): Promise<AnalyzeResult>
 
   while (retryCount <= maxRetries) {
     try {
-      // Get current user
-      const user = await getUser();
-      if (!user) {
-        return createErrorResponse({
-          code: ErrorCode.UNAUTHORIZED,
-          message: 'User not authenticated',
-          userMessage: 'You must be logged in to analyze scans.',
-          recoverable: true,
-        }, retryCount);
-      }
+      // Demo mode - use fixed demo user ID
+      const user = { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd' };
 
       // Fetch scan from database
       const scan = await getScan(scanId);
@@ -48,16 +40,6 @@ export async function analyzeInitialScan(scanId: string): Promise<AnalyzeResult>
           code: ErrorCode.NOT_FOUND,
           message: 'Scan not found in database',
           userMessage: 'We couldn\'t find the scan you\'re looking for. It may have been deleted.',
-          recoverable: false,
-        }, retryCount);
-      }
-
-      // Verify user owns this scan
-      if (scan.user_id !== user.id) {
-        return createErrorResponse({
-          code: ErrorCode.UNAUTHORIZED,
-          message: 'User does not own this scan',
-          userMessage: 'You do not have permission to analyze this scan.',
           recoverable: false,
         }, retryCount);
       }
@@ -218,16 +200,8 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
 
   while (retryCount <= maxRetries) {
     try {
-      // Get current user
-      const user = await getUser();
-      if (!user) {
-        return createErrorResponse({
-          code: ErrorCode.UNAUTHORIZED,
-          message: 'User not authenticated',
-          userMessage: 'You must be logged in to analyze scans.',
-          recoverable: true,
-        }, retryCount);
-      }
+      // Demo mode - use fixed demo user ID
+      const user = { id: 'dddddddd-dddd-dddd-dddd-dddddddddddd' };
 
       // Fetch scan from database
       const scan = await getScan(scanId);
@@ -236,16 +210,6 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
           code: ErrorCode.NOT_FOUND,
           message: 'Scan not found in database',
           userMessage: 'We couldn\'t find the scan you\'re looking for.',
-          recoverable: false,
-        }, retryCount);
-      }
-
-      // Verify user owns this scan
-      if (scan.user_id !== user.id) {
-        return createErrorResponse({
-          code: ErrorCode.UNAUTHORIZED,
-          message: 'User does not own this scan',
-          userMessage: 'You do not have permission to analyze this scan.',
           recoverable: false,
         }, retryCount);
       }

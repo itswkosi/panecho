@@ -1,7 +1,26 @@
-import { createClient } from './server';
+import { createClient } from '@supabase/supabase-js';
 
 const BUCKET_NAME = 'scans';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB - DICOM files typically 2-5MB
+
+/**
+ * Create admin client that bypasses RLS for demo mode
+ */
+function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase credentials');
+  }
+  
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
 
 /**
  * Upload a file to Supabase Storage
@@ -15,7 +34,8 @@ export async function uploadFile(
   scanId: string,
   file: File
 ): Promise<string> {
-  const supabase = await createClient();
+  // Use admin client to bypass RLS for demo mode
+  const supabase = createAdminClient();
 
   // Validate file size
   if (file.size > MAX_FILE_SIZE) {
@@ -55,7 +75,7 @@ export async function uploadFile(
  * @param filePath - Path to file in storage (user_id/scan_id/filename)
  */
 export async function deleteFile(filePath: string): Promise<void> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase.storage
     .from(BUCKET_NAME)
@@ -72,7 +92,7 @@ export async function deleteFile(filePath: string): Promise<void> {
  * @returns Promise resolving to signed URL
  */
 export async function getFileUrl(filePath: string): Promise<string> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)

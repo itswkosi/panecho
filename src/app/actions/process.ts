@@ -1,6 +1,6 @@
 'use server';
 
-import { DicomMessage } from 'dcmjs';
+import dcmjs from 'dcmjs';
 import { parseDICOM, extractKeySlices, getPixelData, getImageDimensions, DICOMMetadata } from '@/lib/dicom/processor';
 import { convertSliceToPNG, optimizeImage } from '@/lib/dicom/converter';
 import { uploadFile, deleteFile } from '@/lib/supabase/storage';
@@ -85,6 +85,7 @@ export async function processDICOM(
     }
 
     // Parse DICOM file
+    const { DicomMessage } = (dcmjs as any).data;
     let dicomDict: any;
     try {
       dicomDict = DicomMessage.readFile(new Uint8Array(arrayBuffer));
