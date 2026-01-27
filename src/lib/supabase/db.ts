@@ -38,6 +38,10 @@ export async function createScan(data: InsertScan): Promise<Scan> {
   const now = new Date();
   const retentionExpiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 90 days
 
+  console.log('[createScan] Generating new scan ID:', scanId);
+  console.log('[createScan] User ID:', data.user_id);
+  console.log('[createScan] File name:', data.file_name);
+
   const { data: scan, error } = await supabase
     .from('scans')
     .insert({
@@ -61,10 +65,20 @@ export async function createScan(data: InsertScan): Promise<Scan> {
     .single();
 
   if (error) {
+    console.error('[createScan] Database insert failed:', error);
     throw new Error(`Failed to create scan: ${error.message}`);
   }
 
-  return formatScanFromDB(scan);
+  if (!scan) {
+    console.error('[createScan] No scan data returned from database');
+    throw new Error('Database returned no scan data');
+  }
+
+  console.log('[createScan] Database insert successful, scan ID:', scan.id);
+  const formattedScan = formatScanFromDB(scan);
+  console.log('[createScan] Formatted scan ID:', formattedScan.id);
+  
+  return formattedScan;
 }
 
 /**

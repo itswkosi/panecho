@@ -154,10 +154,22 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
         key_slices: mockKeySlices,
       });
 
-      console.log('[uploadScan] Scan created successfully:', createdScan.id);
+      console.log('[uploadScan] Scan created successfully. Full scan object:', {
+        id: createdScan.id,
+        user_id: createdScan.user_id,
+        file_name: createdScan.file_name,
+        processing_status: createdScan.processing_status
+      });
 
       // Use the actual scanId from the database
       const actualScanId = createdScan.id;
+      
+      if (!actualScanId) {
+        console.error('[uploadScan] CRITICAL: createdScan.id is null/undefined!');
+        throw new Error('Database returned scan without ID');
+      }
+      
+      console.log('[uploadScan] Validated scanId:', actualScanId, 'Type:', typeof actualScanId);
 
       // Track analytics
       const fileSizeMb = file.size / (1024 * 1024);

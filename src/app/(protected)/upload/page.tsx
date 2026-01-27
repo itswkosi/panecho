@@ -163,8 +163,15 @@ export default function UploadPage() {
 
         const result = await uploadScan(formData);
 
+        console.log('[Upload] Upload result received:', {
+          success: result.success,
+          hasScanId: !!result.data?.scanId,
+          scanId: result.data?.scanId,
+          hasError: !!result.error
+        });
+
         if (!result.success) {
-          console.error('Upload failed:', result.error);
+          console.error('[Upload] Upload failed:', result.error);
           setUploadError(
             result.error?.message || 
             'Upload failed. Please try again.'
@@ -173,8 +180,16 @@ export default function UploadPage() {
           return;
         }
 
+        // Validate we received data with scanId
+        if (!result.data) {
+          console.error('[Upload] ERROR: Upload succeeded but no data returned');
+          setUploadError('Upload completed but response data is missing. Please try again.');
+          setIsUploading(false);
+          return;
+        }
+
         // Redirect to processing page for first successfully uploaded file
-        if (result.data?.scanId && i === 0) {
+        if (result.data.scanId && i === 0) {
           setFiles([]);
           setUploadProgress(0);
           
