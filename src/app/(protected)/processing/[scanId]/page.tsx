@@ -24,11 +24,39 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
   const [retrying, setRetrying] = useState(false);
   const [apiTriggered, setApiTriggered] = useState(false);
 
+  // Early validation for scanId
+  if (!scanId || scanId.trim() === '') {
+    return (
+      <div className="min-h-screen bg-[#F5F1EA]">
+        <div className="container mx-auto px-4 py-12">
+          <div className="mt-8 rounded-lg bg-red-50 p-6 text-center">
+            <h2 className="text-lg font-semibold text-red-900">Invalid Scan ID</h2>
+            <p className="mt-2 text-red-700">
+              No scan ID was provided. Please upload a scan to continue.
+            </p>
+            <button
+              onClick={() => router.push('/upload')}
+              className="mt-4 inline-block rounded-lg bg-red-600 px-6 py-2 font-semibold text-white hover:bg-red-700"
+            >
+              Go to Upload
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Trigger analysis immediately when page loads if status is pending
   useEffect(() => {
     console.log('[ProcessingPage] Effect triggered. Status:', status, 'ScanId:', scanId, 'ApiTriggered:', apiTriggered);
     
-    if (status === 'pending' && !apiTriggered && scanId) {
+    // Validate scanId exists and is not empty
+    if (!scanId || scanId.trim() === '') {
+      console.error('[ProcessingPage] Invalid scanId:', scanId);
+      return;
+    }
+    
+    if (status === 'pending' && !apiTriggered) {
       console.log('[ProcessingPage] Triggering analysis for scanId:', scanId);
       setApiTriggered(true);
       
@@ -92,6 +120,12 @@ export default function ProcessingPage({ params }: ProcessingPageProps) {
   }, [status, startTime]);
 
   const handleRetry = async () => {
+    // Validate scanId before retry
+    if (!scanId || scanId.trim() === '') {
+      console.error('[ProcessingPage] Cannot retry: Invalid scanId:', scanId);
+      return;
+    }
+    
     setRetrying(true);
     setShowRetry(false);
     try {

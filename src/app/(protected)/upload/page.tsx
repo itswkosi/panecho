@@ -178,12 +178,24 @@ export default function UploadPage() {
           setFiles([]);
           setUploadProgress(0);
           
+          const uploadedScanId = result.data.scanId;
+          console.log(`[Upload] Successfully uploaded with scanId: ${uploadedScanId}`);
+          console.log(`[Upload] ScanId type: ${typeof uploadedScanId}, value: "${uploadedScanId}"`);
+          
+          // Validate scanId before proceeding
+          if (!uploadedScanId || uploadedScanId.trim() === '') {
+            console.error('[Upload] ERROR: Received invalid scanId from upload action');
+            setUploadError('Upload completed but scan ID is missing. Please try again.');
+            setIsUploading(false);
+            return;
+          }
+          
           // Trigger background processing via API
-          console.log(`[Upload] Triggering analysis for scan ${result.data.scanId}`);
+          console.log(`[Upload] Triggering analysis for scan ${uploadedScanId}`);
           fetch('/api/process-scan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ scanId: result.data.scanId }),
+            body: JSON.stringify({ scanId: uploadedScanId }),
           })
             .then(res => {
               console.log('[Upload] Processing API response:', res.status);
@@ -197,7 +209,8 @@ export default function UploadPage() {
             });
           
           // Navigate to processing page
-          router.push(`/processing/${result.data.scanId}`);
+          console.log(`[Upload] Navigating to /processing/${uploadedScanId}`);
+          router.push(`/processing/${uploadedScanId}`);
           return;
         }
       }

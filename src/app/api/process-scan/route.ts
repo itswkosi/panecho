@@ -18,8 +18,18 @@ export async function POST(request: NextRequest) {
 
     if (!scanId) {
       console.error('[API] Missing scanId in request');
+      console.error('[API] Full request body:', JSON.stringify(body, null, 2));
       return NextResponse.json(
-        { error: 'scanId is required' },
+        { error: 'scanId is required', receivedBody: body },
+        { status: 400 }
+      );
+    }
+
+    // Validate scanId is not empty string
+    if (typeof scanId !== 'string' || scanId.trim() === '') {
+      console.error('[API] Invalid scanId (empty or not a string):', scanId);
+      return NextResponse.json(
+        { error: 'scanId must be a non-empty string', receivedScanId: scanId },
         { status: 400 }
       );
     }

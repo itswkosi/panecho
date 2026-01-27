@@ -109,13 +109,13 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
       );
     }
 
-    // Generate unique scan ID
-    const scanId = uuidv4();
+    // Generate unique scan ID for storage path
+    const tempScanId = uuidv4();
 
     // Upload file to Supabase Storage
     let fileUrl: string;
     try {
-      fileUrl = await uploadFile(user.id, scanId, file);
+      fileUrl = await uploadFile(user.id, tempScanId, file);
     } catch (uploadError) {
       console.error('Upload error details:', uploadError);
       const appError = handleError(uploadError, 'uploadScan_storage');
@@ -156,7 +156,7 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
 
       console.log('[uploadScan] Scan created successfully:', createdScan.id);
 
-      // Use the actual scanId from the database, not the pre-generated one
+      // Use the actual scanId from the database
       const actualScanId = createdScan.id;
 
       // Track analytics
@@ -171,15 +171,21 @@ export async function uploadScan(formData: FormData): Promise<UploadResult> {
         data: { scanId: actualScanId, fileUrl },
       };
     } catch (dbError) {
-      // File uploaded successfully, but database record failed
-      // Log error but return success - user can still access the file
+      // File uploaded but database record failed - this is a critical error
       console.error('[uploadScan] Failed to create scan record:', dbError);
-
-      // Still return success since file is saved with the pre-generated scanId
-      return {
-        success: true,
-        data: { scanId, fileUrl },
-      };
+      const appError = handleError(dbError, 'uploadScan_database');
+      trackError('uploadScan_db', true);
+      
+      // Return error since we can't proceed without a valid database record
+      return createErrorResponse(
+        {
+          code: ErrorCode.DATABASE_ERROR,
+          message: appError.message,
+          userMessage: 'Failed to save scan information. Please try again.',
+          recoverable: true,
+        },
+        0
+      );
     }
   } catch (error) {
     const appError = handleError(error, 'uploadScan_general');
