@@ -1,4 +1,4 @@
-import { geminiVision as client } from '@/lib/ai/client';
+import { getGeminiModel } from '@/lib/ai/client';
 import {
   buildComparisonPrompt,
   buildTrajectoryPrompt,
@@ -112,7 +112,7 @@ export async function analyzeLongitudinal(
     try {
       const comparisonPrompt = buildComparisonPrompt(newScanAnalysis, previousAnalyses);
 
-      const comparisonResponse = await client.generateContent({
+      const comparisonResponse = await getGeminiModel().generateContent({
         contents: [
           {
             role: 'user',
@@ -168,7 +168,7 @@ export async function analyzeLongitudinal(
         smoking_status: 'never',
       });
 
-      const trajectoryResponse = await client.generateContent({
+      const trajectoryResponse = await getGeminiModel().generateContent({
         contents: [
           {
             role: 'user',
@@ -226,7 +226,7 @@ export async function analyzeLongitudinal(
         result.trajectory_results
       );
 
-      const synthesisResponse = await client.generateContent({
+      const synthesisResponse = await getGeminiModel().generateContent({
         contents: [
           {
             role: 'user',

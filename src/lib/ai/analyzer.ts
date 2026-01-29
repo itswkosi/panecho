@@ -1,6 +1,6 @@
 'use server';
 
-import { geminiVision } from '@/lib/ai/client';
+import { getGeminiModel, getValidatedModelName } from '@/lib/ai/client';
 import { getSystemPrompt, getUserPrompt } from '@/lib/ai/prompts';
 import { ClinicalContext, DetailedFindings } from '@/lib/types/database';
 
@@ -171,10 +171,10 @@ export async function analyzeInitialScan(
       });
     });
 
-    console.log('Calling Gemini 2.0 Flash API for analysis...');
+    console.log(`Calling Gemini API for analysis (model: ${getValidatedModelName()})...`);
 
     // Call Gemini with vision
-    const result = await geminiVision.generateContent({
+    const result = await getGeminiModel().generateContent({
       contents: [
         {
           role: 'user',

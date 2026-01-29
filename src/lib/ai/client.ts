@@ -1,16 +1,37 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize Gemini client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'test-key-placeholder');
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY is not set');
+}
 
-// Export Gemini model for vision tasks
-export const geminiVision = genAI.getGenerativeModel({ 
-  model: 'gemini-2.0-flash-exp',
-  generationConfig: {
-    temperature: 0.3,
-    maxOutputTokens: 1000,
-  }
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Use a known stable model that definitely works
+const STABLE_MODEL = 'gemini-2.0-flash';
+
+console.log(`[Gemini] Using model: ${STABLE_MODEL}`);
+
+// Export function to get model instance
+export function getGeminiModel() {
+  return genAI.getGenerativeModel({ 
+    model: STABLE_MODEL,
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 1000,
+    }
+  });
+}
+
+export function getValidatedModelName(): string {
+  return STABLE_MODEL;
+}
+
+export function isUsingFallbackModel(): boolean {
+  return false;
+}
+
+// Keep for backward compatibility
+export { genAI };
 
 // Keep openai export for compatibility during transition
 export const openai = {
