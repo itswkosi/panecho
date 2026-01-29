@@ -46,7 +46,7 @@ export function ComparedScansTimeline({
               
               fetchedScans.push({
                 id: scanId,
-                date: scan.scan_date || scan.created_at,
+                date: (scan.scan_date || scan.created_at).toISOString(),
                 classification: analysis?.classification || 'unknown',
                 riskScore: analysis?.risk_score || 0,
                 isCurrent: false,

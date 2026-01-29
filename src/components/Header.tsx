@@ -10,15 +10,14 @@ export function Header() {
     <header className="border-b border-[#D4B5A0]/30 bg-[#F5F1EA]">
       <div className="max-w-7xl mx-auto px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center">
             <Image 
               src="/logo.png" 
-              alt="PanEcho Logo" 
+              alt="PanEcho" 
               width={50} 
               height={50}
-              className="rounded-lg"
+              className="rounded-lg hover:opacity-80 transition-opacity"
             />
-            <span className="text-2xl font-serif" style={{ color: '#2C2520' }}>PanEcho</span>
           </Link>
 
           <div className="flex items-center gap-6">
