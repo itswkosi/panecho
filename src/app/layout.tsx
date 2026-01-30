@@ -39,7 +39,9 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
-          <Analytics />
+          <Analytics 
+            mode={process.env.NODE_ENV === 'production' ? 'production' : 'development'}
+          />
         </ErrorBoundary>
       </body>
     </html>
