@@ -111,7 +111,7 @@ export async function getFileUrl(filePath: string): Promise<string> {
  * @returns Promise resolving to list of files
  */
 export async function getUserScans(userId: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
