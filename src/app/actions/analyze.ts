@@ -9,6 +9,7 @@ import {
   updateScan,
   createAnalysis,
   getAnalysesByUserId,
+  getScanInTwoWeekWindow,
 } from '@/lib/supabase/db';
 import { handleError, createErrorResponse, shouldRetry, getRetryDelay } from '@/lib/errors/handler';
 import { ErrorCode, ServerActionResponse } from '@/lib/types/errors';
@@ -18,6 +19,7 @@ export interface AnalyzeResult extends ServerActionResponse<{
   analysis: AnalysisResult;
   analysis_type: 'initial' | 'longitudinal';
   compared_scan_ids?: string[];
+  two_week_comparison_scan_id?: string;
 }> {}
 
 /**
@@ -298,6 +300,18 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
       if (previousAnalyses.length > 0) {
         console.log(`Found ${previousAnalyses.length} previous scans for longitudinal analysis`);
 
+        // Check if any scan falls in the optimal 2-3 week window
+        let twoWeekComparisonScanId: string | undefined;
+        try {
+          const twoWeekScan = await getScanInTwoWeekWindow(user.id, scanDate, scanId);
+          if (twoWeekScan) {
+            twoWeekComparisonScanId = twoWeekScan.id;
+            console.log(`Found optimal 2-3 week comparison scan: ${twoWeekComparisonScanId}`);
+          }
+        } catch (error) {
+          console.error('Error finding two-week window scan:', error);
+        }
+
         try {
           const longitudinalResult = await analyzeLongitudinal(
             {
@@ -334,6 +348,7 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
               longitudinal_changes: longitudinalResult.longitudinal_changes,
               comparison_results: longitudinalResult.comparison_results,
               trajectory_results: longitudinalResult.trajectory_results,
+              two_week_comparison_scan_id: twoWeekComparisonScanId,
             },
             compared_scan_ids: longitudinalResult.compared_scan_ids,
             gpt_model_used: getValidatedModelName(),
@@ -363,6 +378,7 @@ export async function analyzeScanWithLongitudinal(scanId: string): Promise<Analy
               analysis: analysisResult,
               analysis_type: 'longitudinal',
               compared_scan_ids: longitudinalResult.compared_scan_ids,
+              two_week_comparison_scan_id: twoWeekComparisonScanId,
             },
           };
         } catch (longitudinalError) {

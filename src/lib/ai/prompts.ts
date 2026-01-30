@@ -132,18 +132,39 @@ ${previousScansSummary}
 
 Please analyze the changes between scans and identify:
 
-1. Size Changes: Have any lesions grown, shrunk, or remained stable? Quantify if possible.
+1. Size Changes: Have any lesions grown, shrunk, or remained stable? **Provide precise measurements in millimeters (mm) when visible.** For each finding, specify:
+   - A consistent finding_id (e.g., "lesion_head_1") to track the same finding across scans
+   - Location (anatomical location)
+   - Current size in mm (if measurable)
+   - Previous size in mm (if previously measured)
+   - Size change in mm (delta)
+   - Direction (increased/decreased/stable)
+   - Qualitative magnitude (mild/moderate/significant)
+   
 2. New Findings: What new imaging features or abnormalities appear in the current scan?
 3. Resolved Findings: What previously observed findings are no longer present or have improved?
 4. Progression Pattern: Is there a pattern of change (e.g., slow growth, rapid change, improvement)?
 
 Return your response as a valid JSON object with the following structure:
 {
-  "size_changes": [{"finding": "description", "direction": "increased/decreased/stable", "magnitude": "mild/moderate/significant"}],
+  "size_changes": [
+    {
+      "finding": "description",
+      "finding_id": "unique_identifier",
+      "location": "anatomical location",
+      "current_size_mm": 15.5,
+      "previous_size_mm": 14.0,
+      "size_change_mm": 1.5,
+      "direction": "increased/decreased/stable",
+      "magnitude": "mild/moderate/significant"
+    }
+  ],
   "new_findings": ["finding 1", "finding 2"],
   "resolved_findings": ["finding 1", "finding 2"],
   "progression_pattern": "description of overall temporal pattern"
-}`;
+}
+
+Note: If precise measurements cannot be determined from the imaging, omit the numeric size fields (finding_id, location, current_size_mm, previous_size_mm, size_change_mm) but still include direction and magnitude.`;
 }
 
 /**

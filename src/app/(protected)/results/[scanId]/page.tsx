@@ -21,6 +21,8 @@ import { RadiomicFeaturesCard } from '@/components/results/RadiomicFeaturesCard'
 import { SegmentedPancreasVisualization } from '@/components/results/SegmentedPancreasVisualization';
 import { RiskFactorsCard } from '@/components/results/RiskFactorsCard';
 import { SimilarScansWidget } from '@/components/results/SimilarScansWidget';
+import { TwoWeekComparisonCard } from '@/components/results/TwoWeekComparisonCard';
+import { TumorGrowthChart } from '@/components/results/TumorGrowthChart';
 
 interface ResultsPageProps {
   params: Promise<{
@@ -50,6 +52,33 @@ export default function ResultsPage({ params }: ResultsPageProps) {
     extensionCount: number;
   } | null>(null);
   const [extendingRetention, setExtendingRetention] = useState(false);
+  const [userId, setUserId] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'longitudinal' | 'single'>('longitudinal');
+
+  // Load view preference from localStorage on mount
+  useEffect(() => {
+    const loadViewPreference = async () => {
+      const user = await getUser();
+      if (user) {
+        setUserId(user.id);
+        const storageKey = `panecho_results_view_${user.id}`;
+        const savedView = localStorage.getItem(storageKey);
+        if (savedView === 'single' || savedView === 'longitudinal') {
+          setViewMode(savedView);
+        }
+      }
+    };
+    loadViewPreference();
+  }, []);
+
+  // Save view preference to localStorage when changed
+  const handleViewModeChange = (mode: 'longitudinal' | 'single') => {
+    setViewMode(mode);
+    if (userId) {
+      const storageKey = `panecho_results_view_${userId}`;
+      localStorage.setItem(storageKey, mode);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,6 +215,8 @@ export default function ResultsPage({ params }: ResultsPageProps) {
   });
 
   const isLongitudinal = analysis.analysis_type === 'longitudinal';
+  const hasLongitudinalData = isLongitudinal && previousAnalyses.length > 0;
+  const twoWeekComparisonScanId = analysis.detailed_findings?.two_week_comparison_scan_id as string | undefined;
 
   // Build timeline data for longitudinal analysis
   const timelineScans = previousAnalyses.length > 0
@@ -216,7 +247,97 @@ export default function ResultsPage({ params }: ResultsPageProps) {
         </nav>
 
         {/* Page Title */}
-        <h1 className="text-5xl font-serif mb-12" style={{ color: '#2C2520', fontWeight: 400 }}>Scan Analysis Results</h1>
+        <h1 className="text-5xl font-serif mb-8" style={{ color: '#2C2520', fontWeight: 400 }}>Scan Analysis Results</h1>
+
+        {/* View Mode Toggle */}
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => handleViewModeChange('longitudinal')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'longitudinal'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              Longitudinal Analysis
+            </button>
+            <button
+              onClick={() => handleViewModeChange('single')}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                viewMode === 'single'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-white text-slate-700 border border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              Single Scan
+            </button>
+          </div>
+          {!hasLongitudinalData && viewMode === 'longitudinal' && (
+            <p className="text-sm text-slate-600 italic">
+              Upload more scans for longitudinal analysis
+            </p>
+          )}
+        </div>
+
+        {/* Tumor Growth Chart - Always visible when 3+ scans exist */}
+        {previousAnalyses.length >= 2 && (
+          <div className="bg-white rounded-lg p-8 shadow-sm mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <h3 className="text-2xl font-serif mb-2" style={{ color: '#2C2520', fontWeight: 400 }}>Tumor Size Progression</h3>
+            <p className="text-sm mb-6" style={{ color: '#6B5E52' }}>
+              Tracking changes in lesion measurements over time
+            </p>
+            <TumorGrowthChart
+              analyses={[
+                ...previousAnalyses.map(a => ({
+                  scan_date: new Date(a.created_at),
+                  detailed_findings: a.detailed_findings,
+                })),
+                {
+                  scan_date: new Date(analysis.created_at),
+                  detailed_findings: analysis.detailed_findings,
+                },
+              ]}
+            />
+          </div>
+        )}
+
+        {/* Longitudinal View */}
+        {viewMode === 'longitudinal' && hasLongitudinalData && (
+          <>
+            {/* 2-3 Week Comparison Card */}
+            {twoWeekComparisonScanId && (
+              <div className="mb-8">
+                <TwoWeekComparisonCard
+                  twoWeekScanId={twoWeekComparisonScanId}
+                  currentScanId={scanId}
+                  currentRiskScore={analysis.risk_score}
+                  currentClassification={analysis.classification as 'normal' | 'suspicious'}
+                  longitudinalChanges={analysis.detailed_findings?.longitudinal_changes}
+                  comparisonResults={analysis.detailed_findings?.comparison_results}
+                />
+              </div>
+            )}
+
+            {/* Longitudinal Analysis Section */}
+            <div className="bg-white rounded-lg p-8 shadow-sm mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+              <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Historical Comparison</h3>
+              <div>
+                <h4 className="text-sm font-medium mb-4" style={{ color: '#6B5E52' }}>Risk Probability Over Time</h4>
+                <TimelineVisualization scans={timelineScans} />
+              </div>
+
+              <div className="mt-6 pt-6" style={{ borderTop: '1px solid #E8E4DD' }}>
+                <h4 className="text-sm font-medium mb-3" style={{ color: '#6B5E52' }}>Change Summary</h4>
+                <p className="text-sm leading-relaxed" style={{ color: '#6B5E52' }}>
+                  {analysis.risk_score > (previousAnalyses[previousAnalyses.length - 1]?.risk_score || 0)
+                    ? 'Risk score has increased compared to previous scan, indicating progression of concerning features.'
+                    : 'Risk score has remained stable or decreased, suggesting stable or improving pancreatic health.'}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Top Row: Patient Info (Left) + Scan Image (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -274,25 +395,6 @@ export default function ResultsPage({ params }: ResultsPageProps) {
             riskScore={analysis.risk_score} 
           />
         </div>
-
-        {/* Longitudinal Analysis Section */}
-        {isLongitudinal && previousAnalyses.length > 0 && (
-          <div className="bg-white rounded-lg p-8 shadow-sm mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <h3 className="text-2xl font-serif mb-6" style={{ color: '#2C2520', fontWeight: 400 }}>Longitudinal Analysis</h3>
-            <div>
-              <h4 className="text-sm font-medium mb-4" style={{ color: '#6B5E52' }}>Risk Probability Over Time</h4>
-              <TimelineVisualization scans={timelineScans} />
-            </div>
-            <div className="mt-6 pt-6" style={{ borderTop: '1px solid #E8E4DD' }}>
-              <h4 className="text-sm font-medium mb-3" style={{ color: '#6B5E52' }}>Change Summary</h4>
-              <p className="text-sm leading-relaxed" style={{ color: '#6B5E52' }}>
-                {analysis.risk_score > (previousAnalyses[previousAnalyses.length - 1]?.risk_score || 0)
-                  ? 'Risk score has increased compared to previous scan, indicating progression of concerning features.'
-                  : 'Risk score has remained stable or decreased, suggesting stable or improving pancreatic health.'}
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Next Steps Section */}
         <div className="bg-white rounded-lg p-8 shadow-sm mb-8" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
@@ -369,6 +471,18 @@ export default function ResultsPage({ params }: ResultsPageProps) {
         {/* Disclaimer */}
         <div className="mb-8">
           <Disclaimer />
+        </div>
+
+        {/* Upload Next Scan Button */}
+        <div className="flex justify-center pb-8">
+          <Link href="/upload">
+            <Button 
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg font-medium shadow-lg hover:shadow-xl transition-all"
+            >
+              Upload Next Scan
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

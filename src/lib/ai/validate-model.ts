@@ -43,17 +43,27 @@ export async function listAvailableModels(apiKey: string): Promise<ModelInfo[]> 
   }
   
   try {
-    console.log('[Model Validation] Fetching available models from Google API...');
-    const genAI = new GoogleGenerativeAI(apiKey);
+    console.log('[Model Validation] Using known working models (SDK does not support listModels)');
     
-    // Use the listModels method from the SDK
-    const models = await genAI.listModels();
-    
-    const modelList = models.map(model => ({
-      name: model.name.replace('models/', ''),
-      displayName: model.displayName || model.name,
-      description: model.description,
-    }));
+    // Return known working models without API call
+    // Note: Gemini SDK doesn't support listModels() method
+    const modelList = [
+      {
+        name: 'gemini-2.0-flash',
+        displayName: 'Gemini 2.0 Flash',
+        description: 'Fast and efficient model for most tasks',
+      },
+      {
+        name: 'gemini-1.5-flash',
+        displayName: 'Gemini 1.5 Flash',
+        description: 'Fast model with good performance',
+      },
+      {
+        name: 'gemini-1.5-pro',
+        displayName: 'Gemini 1.5 Pro',
+        description: 'Advanced model for complex tasks',
+      },
+    ];
     
     // Update cache
     modelsCache = {
@@ -62,10 +72,10 @@ export async function listAvailableModels(apiKey: string): Promise<ModelInfo[]> 
     };
     lastApiCallTimestamp = now;
     
-    console.log(`[Model Validation] Successfully fetched ${modelList.length} models`);
+    console.log(`[Model Validation] Returning ${modelList.length} known models`);
     return modelList;
   } catch (error) {
-    console.error('[Model Validation] Failed to list available models:', error);
+    console.error('[Model Validation] Failed to return model list:', error);
     
     // If we have stale cache, return it as fallback
     if (modelsCache) {

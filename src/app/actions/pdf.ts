@@ -76,14 +76,17 @@ export async function generatePDF(scanId: string): Promise<PDFResult> {
     }
 
     // Verify user owns this scan
+    console.log('[generatePDF] Checking ownership - scan.user_id:', scan.user_id, 'user.id:', user.id);
     if (scan.user_id !== user.id) {
+      console.error('[generatePDF] Ownership check failed - scan belongs to', scan.user_id, 'but user is', user.id);
       return createErrorResponse({
         code: ErrorCode.UNAUTHORIZED,
         message: 'User does not own this scan',
-        userMessage: 'You do not have permission to view this scan.',
+        userMessage: 'You do not have permission to download this report.',
         recoverable: false,
       }, 0);
     }
+    console.log('[generatePDF] Ownership check passed');
 
     // If longitudinal analysis, fetch previous analyses
     let previousAnalyses: Analysis[] = [];

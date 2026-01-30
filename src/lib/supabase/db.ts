@@ -325,6 +325,81 @@ export async function getAnalysesByUserId(
 }
 
 /**
+ * Get a scan within the 2-3 week window (14-21 days) from a target date
+ * Returns the scan closest to 17.5 days (2.5 weeks) for optimal comparison
+ * @param userId - User ID to search scans for
+ * @param targetDate - The reference scan date to compare against
+ * @param excludeScanId - Optional scan ID to exclude from results (typically the current scan)
+ * @returns Scan closest to 2.5 weeks before target date, or null if none found
+ */
+export async function getScanInTwoWeekWindow(
+  userId: string,
+  targetDate: Date,
+  excludeScanId?: string
+): Promise<{ id: string; scan_date: Date; file_name: string } | null> {
+  const supabase = getServerClient();
+  
+  // Calculate date boundaries (14-21 days before target)
+  const minDate = new Date(targetDate);
+  minDate.setDate(minDate.getDate() - 21);
+  
+  const maxDate = new Date(targetDate);
+  maxDate.setDate(maxDate.getDate() - 14);
+  
+  const { data: scans, error } = await supabase
+    .from('scans')
+    .select('id, scan_date, file_name')
+    .eq('user_id', userId)
+    .eq('processing_status', 'completed')
+    .gte('scan_date', minDate.toISOString())
+    .lte('scan_date', maxDate.toISOString())
+    .order('scan_date', { ascending: false });
+    
+  if (error) {
+    console.error('Error fetching scans in two-week window:', error);
+    return null;
+  }
+  
+  if (!scans || scans.length === 0) {
+    return null;
+  }
+  
+  // Filter out excluded scan if provided
+  const validScans = excludeScanId 
+    ? scans.filter(scan => scan.id !== excludeScanId)
+    : scans;
+    
+  if (validScans.length === 0) {
+    return null;
+  }
+  
+  // Find scan closest to 17.5 days (2.5 weeks = 1512000000 milliseconds)
+  const optimalDays = 17.5;
+  const optimalMs = optimalDays * 24 * 60 * 60 * 1000;
+  
+  let closestScan = validScans[0];
+  let closestDiff = Math.abs(
+    targetDate.getTime() - new Date(validScans[0].scan_date).getTime() - optimalMs
+  );
+  
+  for (const scan of validScans.slice(1)) {
+    const diff = Math.abs(
+      targetDate.getTime() - new Date(scan.scan_date).getTime() - optimalMs
+    );
+    if (diff < closestDiff) {
+      closestDiff = diff;
+      closestScan = scan;
+    }
+  }
+  
+  return {
+    id: closestScan.id,
+    scan_date: new Date(closestScan.scan_date),
+    file_name: closestScan.file_name,
+  };
+}
+
+/**
  * Tracks usage for a user (increments scan count)
  * @param userId - User ID to track usage for
  */

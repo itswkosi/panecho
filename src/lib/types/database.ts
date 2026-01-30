@@ -16,7 +16,16 @@ export interface DetailedFindings {
   // Longitudinal analysis fields
   longitudinal_changes?: LongitudinalChanges;
   comparison_results?: {
-    size_changes: Array<{ finding: string; direction: string; magnitude: string }>;
+    size_changes: Array<{ 
+      finding: string;
+      finding_id?: string;
+      location?: string;
+      current_size_mm?: number;
+      previous_size_mm?: number;
+      size_change_mm?: number;
+      direction: string;
+      magnitude: string;
+    }>;
     new_findings: string[];
     resolved_findings: string[];
     progression_pattern: string;
